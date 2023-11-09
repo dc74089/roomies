@@ -1,0 +1,79 @@
+{% extends 'app/base.html' %}
+{% load static %}
+
+{% block script %}
+  <link rel="stylesheet" href="{% static 'app/bootstrap-select.css' %}">
+  <script src="{% static 'app/bootstrap-select.js' %}"></script>
+{% endblock %}
+
+{% block content %}
+  <div class="row">
+    <div class="col-12">
+      <div class="card mb-3">
+        <div class="card-body">
+          <h1 class="card-title text-center">Welcome, {{ person.name }}</h1>
+          {% if requests_remaining > 0 %}
+            <p class="text-center">You may put in {{ requests_remaining }} more roommate requests.</p>
+          {% else %}
+            <p class="text-center">You have already put in the maximum number of roommate requests.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% if requests_remaining > 0 %}
+      <div class="col-12">
+        <div class="card mb-3">
+          <div class="card-body">
+            <h2 class="card-title text-center">New Request</h2>
+            <form method="post" action="{% url 'student_create_request' %}">
+              {% csrf_token %}
+              <div class="row mb-3">
+                <div class="col-5">
+                  <select class="selectpicker w-100" disabled>
+                    <option>{{ person.name }}</option>
+                  </select>
+                </div>
+                <div class="col-2">
+                  <select class="selectpicker w-100" name="type" {% if not settings.STUDENTS_CAN_REPEL %}disabled{% endif %}>
+                    <option value="attract">with</option>
+                    {% if settings.STUDENTS_CAN_REPEL %}
+                      <option value="repel">not with</option>
+                    {% endif %}
+                  </select>
+                </div>
+                <div class="col-5">
+                  <select class="selectpicker w-100" name="requestee" data-live-search="true">
+                    {% for p in others %}
+                      <option value="{{ p.id }}">{{ p.name }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
+              <div class="w-100 text-center">
+                <button class="btn btn-success" type="submit">Confirm</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    {% endif %}
+    {% for req in requests %}
+      <div class="col-12 col-lg-4">
+        <div class="card mb-3">
+          <div class="card-body text-center">
+            <h3>{{ req.requestor.name }}</h3>
+            <h5>{{ req.get_type_display }}</h5>
+            <h3>{{ req.requestee.name }}</h3>
+            <form class="text-center" method="post" action="{% url 'student_delete_request' %}">
+              <div class="d-none">
+                {% csrf_token %}
+                <input name="rid" value="{{ req.id }}">
+              </div>
+              <button class="text-center btn btn-danger mt-3">Delete Request</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+{% endblock %}

@@ -1,0 +1,65 @@
+{% extends 'app/base.html' %}
+
+{% block content %}
+  <div class="row">
+    <div class="col-12 col-lg-8 offset-lg-2">
+      <div class="card mb-3">
+        <div class="card-body">
+          <h2 class="card-title">Step 1: Upload People</h2>
+          <p>Use the following fields:</p>
+          <ul>
+            <li>Name</li>
+            <li>ID</li>
+            <li>Gender (should be one of <code>male</code>, <code>female</code>, or <code>nb</code>)</li>
+          </ul>
+          <form method="post" enctype="multipart/form-data" action="{% url 'csv' %}">
+            {% csrf_token %}
+            <p>Upload a CSV below:</p>
+            <p><input type="file" name="names"></p>
+            <p>
+              <button type="submit" class="btn btn-success text-white">Submit</button>
+            </p>
+          </form>
+        </div>
+      </div>
+      <div class="card mb-3">
+        <div class="card-body">
+          <h2 class="card-title">Step 2: Collect Requests</h2>
+          <p>Currently configured to collect <code>{{ settings.REQS_PER_STUDENT }}</code> requests per student. This can
+            be changed in code.</p>
+          <p><a href="{% url 'admin_create_request' %}" class="btn btn-success">Click here to add or edit manual requests</a></p>
+          <p><a href="{% url 'admin:app_request_changelist' %}" class="btn btn-secondary">Click here to view and edit all student requests</a></p>
+        </div>
+      </div>
+      <div class="card mb-3">
+        <div class="card-body">
+          <h2 class="card-title">Step 3: Generate Room List</h2>
+          <p>Currently configured to select <code>{{ settings.PEOPLE_PER_ROOM }}</code> people per room. This can be
+            changed in code.</p>
+          <a href="#" class="btn btn-success">Generate</a>
+        </div>
+      </div>
+      <div class="card mb-3">
+        <div class="card-body">
+          <h2 class="card-title">Step 4: Add Manual Requirements</h2>
+          <p>Click below to view a generated room list, and add "require" and "forbid" requirements.</p>
+          <p><b>Newest lists are at the top</b></p>
+          <ul>
+            <li><a href="#">Solution 1</a></li>
+          </ul>
+          <p>Re-generate list after adding new requirements.</p>
+        </div>
+      </div>
+      <div class="card mb-3">
+        <div class="card-body">
+          <h2 class="card-title">Step 5: Fine-Tune and Finalize Room List</h2>
+          <p>Click below to view a generated room list, and manually move people.</p>
+          <p><b>Newest lists are at the top</b></p>
+          <ul>
+            <li><a href="#">Solution 1</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

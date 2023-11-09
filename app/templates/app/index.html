@@ -1,0 +1,37 @@
+{% extends 'app/base.html' %}
+{% load static %}
+
+{% block script %}
+  <link rel="stylesheet" href="{% static 'app/bootstrap-select.css' %}">
+  <script src="{% static 'app/bootstrap-select.js' %}"></script>
+{% endblock %}
+
+{% block content %}
+  <div class="row">
+    <div class="col-12 col-lg-8 offset-lg-2">
+      <div class="card mb-3">
+        <div class="card-body">
+          <h2 class="card-title">Student Login</h2>
+          {% if error %}
+            <div class="alert alert-warning">We don't recognize that Student / ID combo. Please try again.</div>
+          {% endif %}
+          <form action="{% url 'student_home' %}" method="post">
+            {% csrf_token %}
+            <div class="form-group">
+              <select class="selectpicker w-100" data-live-search="true" name="sid">
+                <option value="">Choose your Name</option>
+                {% for person in people %}
+                  <option value="{{ person.id }}">{{ person.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="form-group">
+              <input type="number" name="password" class="form-control" placeholder="Type Your Student ID">
+            </div>
+            <button type="submit" class="btn btn-success">Log In</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
