@@ -1,0 +1,48 @@
+version: '2.3'
+
+services:
+  django:
+    build:
+      context: .
+      dockerfile: Dockerfile.django
+    depends_on:
+      - mysql
+    environment:
+      WSGI_NAME: aiweb
+      PROD: 1
+      DOCKER: 1
+      WORKERS: 1
+    volumes:
+      - media:/app/media
+      - static:/app/static
+      - secret:/app/secret
+      - bind:/app/bind
+
+  nginx:
+    build:
+      context: .
+      dockerfile: Dockerfile.nginx
+    depends_on:
+      - django
+    volumes:
+      - media:/app/media
+      - static:/app/static
+      - bind:/app/bind
+
+  mysql:
+    image: mysql:8
+    environment:
+      MYSQL_DATABASE: django
+      MYSQL_USER: django
+      MYSQL_PASSWORD: django
+      MYSQL_RANDOM_ROOT_PASSWORD: 'yes'
+    volumes:
+      - sql:/var/lib/mysql
+    command: ['mysqld', '--character-set-server=utf8mb4', '--collation-server=utf8mb4_unicode_ci']
+
+volumes:
+  sql:
+  media:
+  static:
+  secret:
+  bind:

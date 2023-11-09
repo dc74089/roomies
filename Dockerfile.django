@@ -1,0 +1,16 @@
+FROM ubuntu:latest
+
+RUN apt update\
+  && DEBIAN_FRONTEND=noninteractive apt install -y python3 python3-pip default-libmysqlclient-dev cron tzdata\
+  && rm -rf /var/lib/apt/lists/*\
+  && pip3 install -U pip gunicorn
+
+ENV TZ=America/New_York
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+RUN mkdir -p /app/code && mkdir -p /app/bind
+
+WORKDIR /app/code
+COPY . /app/code
+
+CMD ./entrypoint.sh
