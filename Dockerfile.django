@@ -1,7 +1,7 @@
 FROM ubuntu:latest
 
 RUN apt update\
-  && DEBIAN_FRONTEND=noninteractive apt install -y python3 python3-pip default-libmysqlclient-dev cron tzdata\
+  && DEBIAN_FRONTEND=noninteractive apt install -y python3 python3-pip default-libmysqlclient-dev cron tzdata pkg-config\
   && rm -rf /var/lib/apt/lists/*\
   && pip3 install -U pip gunicorn
 
