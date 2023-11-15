@@ -9,8 +9,8 @@ def export():
     for gender, _ in supported_genders:
         obj[gender] = [
             {
-                "requestor": req.requestor,
-                "requestee": req.requestee
+                "requestor": req.requestor.name,
+                "requestee": req.requestee.name
             }
 
             for req in Request.objects.filter(requestor__gender=gender)
