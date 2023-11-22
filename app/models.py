@@ -42,10 +42,15 @@ class Request(models.Model):
 
 class Solution(models.Model):
     name = models.TextField()
-    solution = models.TextField()
+    solution = models.TextField()  # Format: uuid as keys, list of person id as vals
+    explanation = models.TextField()
+    added = models.DateTimeField(auto_now_add=True)
 
     def set_solution(self, soln_dict):
         self.solution = json.dumps(soln_dict)
 
     def get_solution(self):
         return json.loads(self.solution)
+
+    def __str__(self):
+        return self.name

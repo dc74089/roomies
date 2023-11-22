@@ -34,29 +34,19 @@
       <div class="card mb-3">
         <div class="card-body">
           <h2 class="card-title">Step 3: Generate Room List</h2>
-          <p>Currently configured to select <code>{{ settings.PEOPLE_PER_ROOM }}</code> people per room. This can be
-            changed in code.</p>
+          <p>Currently configured to select <code>{{ settings.ROOMS }}</code> rooms. This can be changed in code.</p>
           <a href="#" class="btn btn-success">Generate</a>
         </div>
       </div>
       <div class="card mb-3">
         <div class="card-body">
-          <h2 class="card-title">Step 4: Add Manual Requirements</h2>
-          <p>Click below to view a generated room list, and add "require" and "forbid" requirements.</p>
+          <h2 class="card-title">Step 4: Fine-Tune Room Lists</h2>
+          <p>Click below to view a generated room list.</p>
           <p><b>Newest lists are at the top</b></p>
           <ul>
-            <li><a href="#">Solution 1</a></li>
-          </ul>
-          <p>Re-generate list after adding new requirements.</p>
-        </div>
-      </div>
-      <div class="card mb-3">
-        <div class="card-body">
-          <h2 class="card-title">Step 5: Fine-Tune and Finalize Room List</h2>
-          <p>Click below to view a generated room list, and manually move people.</p>
-          <p><b>Newest lists are at the top</b></p>
-          <ul>
-            <li><a href="#">Solution 1</a></li>
+            {% for soln in solutions %}
+              <li><a href="#">{{ soln.name }}</a></li>
+            {% endfor %}
           </ul>
         </div>
       </div>

@@ -2,7 +2,7 @@ from django.contrib.auth import authenticate, login as do_login, logout as do_lo
 from django.http import HttpResponseBadRequest
 from django.shortcuts import render, redirect
 
-from app.models import Person
+from app.models import Person, Solution
 
 
 # Create your views here.
@@ -10,7 +10,9 @@ from app.models import Person
 
 def index(request):
     if request.user.is_authenticated:
-        return render(request, "app/admin.html")
+        return render(request, "app/admin.html", {
+            "solutions": Solution.objects.all()
+        })
     else:
         if 'sid' in request.session:
             return redirect('student_home')
