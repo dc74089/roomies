@@ -93,13 +93,17 @@ def move_student_in_solution(request):
     if request.user.is_authenticated and request.method == "POST":
         data = request.POST
 
-        if 'solution' in data and 'person' in data and 'from' in data and 'to' in data:
+        if 'solution' in data and 'person' in data and 'to' in data:
             solution = Solution.objects.get(id=data['solution'])
             soln = solution.get_solution()
 
-            if data['person'] in soln[data['from']]:
-                soln[data['from']].remove(data['person'])
-                soln[data['to']].append(data['person'])
+            for room in soln:
+                try:
+                    soln[room].remove(data['person'])
+                except ValueError:
+                    pass
+
+            soln[data['to']].append(data['person'])
 
             solution.set_solution(soln)
             solution.save()

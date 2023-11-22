@@ -2,52 +2,54 @@
 
 {% block script %}
   <style>
-  @media print {
-      .print-halfpage {
-          display: flex;
-          flex: 0 0 33%;
-          max-width: 33%;
+      @media print {
+          .print-halfpage {
+              display: flex;
+              flex: 0 0 33%;
+              max-width: 33%;
+          }
+
+          .card {
+              width: 100%;
+          }
       }
 
-      .card {
-          width: 100%;
+      .highlighted {
+          background-color: yellow !important;
+          font-weight: bold;
       }
-  }
   </style>
 
   <script>
       let stu;
-      let from;
 
       $(function () {
           $(".movehere").hide();
       })
 
-      function move_student(student_id, old_room_id) {
+      function move_student(student_id) {
           stu = student_id;
-          from = old_room_id;
 
-          $("#person-" + stu).addClass("font-weight-bold");
+          $("#person-" + stu).addClass("highlighted");
 
           $(".move").hide();
           $(".movehere").show();
       }
 
       function move_to(room_id) {
-          if (from !== room_id) {
-              $.post("{% url 'admin_move_student' %}", {
-                  "solution": "{{ solution.id }}",
-                  "person": stu,
-                  "from": from,
-                  "to": room_id
-              })
-          }
-
           table_id = room_id.replaceAll(" ", "")
-          $("#person-" + stu).removeClass("font-weight-bold").detach().appendTo("#table-" + table_id)
+          $("#person-" + stu).removeClass("highlighted")
 
           $(".move").show();
           $(".movehere").hide();
+
+          $.post("{% url 'admin_move_student' %}", {
+              "solution": "{{ solution.id }}",
+              "person": stu,
+              "to": room_id
+          })
+
+          $("#person-" + stu).detach().appendTo("#table-" + table_id)
       }
   </script>
 {% endblock %}
@@ -72,7 +74,7 @@
                 <tr id="person-{{ person.id }}">
                   <td>{{ person.name }}</td>
                   <td class="d-print-none">
-                    <a href="#" class="move" onclick="move_student({{ person.id }}, '{{ room }}'); return false;">Move</a>
+                    <a href="#" class="move" onclick="move_student({{ person.id }}); return false;">Move</a>
                   </td>
                 </tr>
               {% endfor %}
