@@ -1,6 +1,5 @@
 import json
 import random
-import uuid
 
 from django.conf import settings
 from django.utils import timezone
@@ -60,9 +59,11 @@ def generate_solutions(n):
             if soln[0] < best_score:
                 best_score = soln[0]
                 solutions = []
+                print(f"\nNew best score: {soln[0]}")
 
             if soln[0] == best_score:
                 solutions.append(soln)
+                print(f"\nSaving solution with {soln[0]}")
 
         print(f"Found {len(solutions)} equivalent solutions with score {soln[0]}")
 

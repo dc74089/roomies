@@ -33,6 +33,6 @@ def evaluate_solution(soln: dict, gender):
     score = 0
     for key in sorted(failure_inversion.keys()):
         out.append(f"{failure_inversion[key]} people had {key} failures")
-        score += failure_inversion[key] * key * key
+        score += failure_inversion[key] * key * key * key
 
     return num_failures, f"{num_failures} failures, {num_successes} successes. {', '.join(out)}"
