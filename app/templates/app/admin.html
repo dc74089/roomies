@@ -45,7 +45,7 @@
           <p><b>Newest lists are at the top</b></p>
           <ul>
             {% for soln in solutions %}
-              <li><a href="#">{{ soln.name }}</a></li>
+              <li><a href="{% url 'admin_edit_solution' soln.id %}">{{ soln.name }}</a></li>
             {% endfor %}
           </ul>
         </div>

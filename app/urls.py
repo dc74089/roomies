@@ -15,4 +15,7 @@ urlpatterns = [
     path('admin/csv', admin.csv_import, name="csv"),
     path('admin/createrequest', admin.admin_create_request, name="admin_create_request"),
     path('admin/deleterequest', admin.admin_delete_request, name="admin_delete_request"),
+
+    path('admin/editsolution/<int:id>', admin.view_edit_solution, name="admin_edit_solution"),
+    path('admin/editsolution/movestudent', admin.move_student_in_solution, name="admin_move_student"),
 ]

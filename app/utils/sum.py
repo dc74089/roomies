@@ -22,6 +22,7 @@ def helper(eligible, current_room_ids):
 def generate_solution(gender):
     out = {}
     placed = []
+    next_room = 1
 
     people = list(Person.objects.filter(gender=gender))
     random.shuffle(people)
@@ -29,8 +30,9 @@ def generate_solution(gender):
     seeds = people[:settings.ROOMS]
 
     for seed in seeds:
-        out[str(uuid.uuid4())] = [seed.id]
+        out[f"Room {next_room}"] = [seed.id]
         placed.append(seed)
+        next_room += 1
 
     while len(placed) < len(people):
         for room in out.keys():
@@ -48,18 +50,29 @@ def generate_solution(gender):
 
 
 def generate_solutions(n):
-    for gender in ("male", "female"):
+    for gender in ("Male", "Female"):
         solutions = []
+        best_score = 2**30
+
         for _ in tqdm(range(n)):
-            solutions.append((generate_solution(gender)))
+            soln = (generate_solution(gender.lower()))
 
-        solutions = sorted(solutions, key=lambda x: x[0])
-        print(solutions[0][1])
+            if soln[0] < best_score:
+                best_score = soln[0]
+                solutions = []
 
-        s = Solution(
-            name=f"{gender} rooms generated {timezone.now().isoformat()}",
-            solution=json.dumps(solutions[0][2]),
-            explanation=solutions[0][1]
-        )
+            if soln[0] == best_score:
+                solutions.append(soln)
 
-        s.save()
+        print(f"Found {len(solutions)} equivalent solutions with score {soln[0]}")
+
+        i = 1
+        for x in solutions:
+            s = Solution(
+                name=f"{gender} rooms generated {timezone.now().strftime('%Y-%m-%d %H:%M')} (#{i})",
+                solution=json.dumps(x[2]),
+                explanation=x[1]
+            )
+
+            s.save()
+            i += 1
