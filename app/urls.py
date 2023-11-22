@@ -13,6 +13,7 @@ urlpatterns = [
     path('logout', views.logout, name="logout"),
 
     path('admin/csv', admin.csv_import, name="csv"),
+    path('admin/togglestudent', admin.toggle_student_availability, name="toggle_student_login"),
     path('admin/createrequest', admin.admin_create_request, name="admin_create_request"),
     path('admin/deleterequest', admin.admin_delete_request, name="admin_delete_request"),
 

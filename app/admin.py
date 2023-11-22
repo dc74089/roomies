@@ -6,3 +6,4 @@ from app.models import *
 admin.site.register(Person)
 admin.site.register(Request)
 admin.site.register(Solution)
+admin.site.register(SiteConfig)

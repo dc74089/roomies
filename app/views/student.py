@@ -2,10 +2,13 @@ from django.conf import settings
 from django.http import HttpResponseBadRequest
 from django.shortcuts import render, redirect
 
-from app.models import Person, Request
+from app.models import Person, Request, SiteConfig
 
 
 def student_home(request):
+    if not SiteConfig.objects.get(id="open_for_students"):
+        return redirect('logout')
+
     if request.method == "POST":
         if 'sid' in request.POST and 'password' in request.POST:
             data = request.POST

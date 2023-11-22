@@ -6,7 +6,7 @@ from django.http import HttpResponseBadRequest, HttpResponse
 from django.shortcuts import redirect, render
 from django.views.decorators.csrf import csrf_exempt
 
-from app.models import Person, request_types, Request, Solution
+from app.models import Person, request_types, Request, Solution, SiteConfig
 
 
 @login_required
@@ -58,6 +58,16 @@ def admin_delete_request(request):
         return redirect('admin_create_request')
 
 
+@login_required
+def toggle_student_availability(request):
+    conf = SiteConfig.objects.get(id="open_for_students")
+    conf.val = not conf.val
+    conf.save()
+
+    return redirect('index')
+
+
+@login_required
 def view_edit_solution(request, id):
     solution = Solution.objects.get(id=id)
     soln = solution.get_solution()
@@ -76,6 +86,7 @@ def view_edit_solution(request, id):
     })
 
 
+@login_required
 @csrf_exempt
 def move_student_in_solution(request):
     print(dict(request.POST))

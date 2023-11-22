@@ -27,8 +27,15 @@
           <h2 class="card-title">Step 2: Collect Requests</h2>
           <p>Currently configured to collect <code>{{ settings.REQS_PER_STUDENT }}</code> requests per student. This can
             be changed in code.</p>
-          <p><a href="{% url 'admin_create_request' %}" class="btn btn-success">Click here to add or edit manual requests</a></p>
-          <p><a href="{% url 'admin:app_request_changelist' %}" class="btn btn-secondary">Click here to view and edit all student requests</a></p>
+          {% comment %}<p><a href="{% url 'admin_create_request' %}" class="btn btn-success">Click here to add or edit manual requests</a></p>{% endcomment %}
+          <p><a href="{% url 'admin:app_request_changelist' %}" class="btn btn-secondary">Click here to view and edit
+            all student requests</a></p>
+
+          {% if open_for_students %}
+            <p><a href="{% url 'toggle_student_login' %}" class="btn btn-primary text-white">Currently open for students. Click here to close.</a></p>
+          {% else %}
+            <p><a href="{% url 'toggle_student_login' %}" class="btn btn-danger">Currently closed for students. Click here to open.</a></p>
+          {% endif %}
         </div>
       </div>
       <div class="card mb-3">

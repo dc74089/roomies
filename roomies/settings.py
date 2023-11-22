@@ -87,6 +87,7 @@ TEMPLATES = [
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
+                'app.context_processors.add_siteconfig',
                 'app.context_processors.add_settings',
                 'django.template.context_processors.debug',
                 'django.template.context_processors.request',

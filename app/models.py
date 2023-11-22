@@ -2,6 +2,22 @@ import json
 
 from django.db import models
 
+
+class SiteConfig(models.Model):
+    id = models.CharField(max_length=100, primary_key=True)
+    val = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.id.replace("_", " ").title()
+
+    def __bool__(self):
+        return self.val
+
+    @classmethod
+    def init_all(cls):
+        SiteConfig.objects.get_or_create(id="open_for_students")
+
+
 # Create your models here.
 supported_genders = (
     ("male", "Male"),
