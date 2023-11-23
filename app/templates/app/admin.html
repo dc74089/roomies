@@ -32,7 +32,7 @@
             all student requests</a></p>
 
           {% if open_for_students %}
-            <p><a href="{% url 'toggle_student_login' %}" class="btn btn-primary text-white">Currently open for students. Click here to close.</a></p>
+            <p><a href="{% url 'toggle_student_login' %}" class="btn btn-success text-white">Currently open for students. Click here to close.</a></p>
           {% else %}
             <p><a href="{% url 'toggle_student_login' %}" class="btn btn-danger">Currently closed for students. Click here to open.</a></p>
           {% endif %}
