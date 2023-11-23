@@ -40,7 +40,8 @@ else:
     SECRET_KEY = ''
 
 ALLOWED_HOSTS = [
-    'roomies.canora.us'
+    'roomies.canora.us',
+    'eme6209.canora.us',
 ]
 
 if DEBUG:
