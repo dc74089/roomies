@@ -3,6 +3,7 @@ import uuid
 from app.models import Person, Request
 
 
+# TODO: UNFINISHED in favor of a smarter algorithm
 def generate_solution():
     for _ in range(1000):
         stu_map = {}
