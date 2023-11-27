@@ -7,6 +7,7 @@ from tqdm import tqdm
 
 from app.models import Person, Request, Solution
 from app.utils.evaluate import evaluate_solution
+from app.utils.hash import hash_solution
 
 
 def helper(eligible, current_room_ids):
@@ -51,6 +52,7 @@ def generate_solution(gender):
 def generate_solutions(n):
     for gender in ("Male", "Female"):
         solutions = []
+        hashes = []
         best_score = 2**30
 
         for _ in tqdm(range(n)):
@@ -59,10 +61,12 @@ def generate_solutions(n):
             if soln[0] < best_score:
                 best_score = soln[0]
                 solutions = []
+                hashes = []
                 print(f"\nNew best score: {soln[0]}")
 
-            if soln[0] == best_score:
+            if soln[0] == best_score and hash_solution(soln[2]) not in hashes:
                 solutions.append(soln)
+                hashes.append(hash_solution(soln[2]))
                 print(f"\nSaving solution with {soln[0]}")
 
         print(f"Found {len(solutions)} equivalent solutions with score {soln[0]}")

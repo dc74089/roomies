@@ -13,7 +13,8 @@ def index(request):
 
     if request.user.is_authenticated:
         return render(request, "app/admin.html", {
-            "solutions": Solution.objects.all()
+            "solutions": Solution.objects.all(),
+            "nonresponses": Person.objects.filter(requests__isnull=True).distinct().order_by('name')
         })
     else:
         if not SiteConfig.objects.get(id="open_for_students"):
@@ -63,6 +64,3 @@ def logout(request):
     request.session.clear()
     request.session.save()
     return redirect('index')
-
-
-
