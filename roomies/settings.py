@@ -50,8 +50,8 @@ if DEBUG:
         'localhost'
     ])
 
-REQS_PER_STUDENT = 3  # Will be 5
-ROOMS = 5
+REQS_PER_STUDENT = 5
+ROOMS = 20
 STUDENTS_CAN_REPEL = False
 
 LOGIN_URL = "/login"
