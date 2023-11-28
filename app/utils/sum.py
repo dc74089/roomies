@@ -10,11 +10,28 @@ from app.utils.evaluate import evaluate_solution
 from app.utils.hash import hash_solution
 
 
+db = None
+
+
+def fill_db():
+    global db
+
+    db = {person.id: {p.id: 0 for p in Person.objects.all()} for person in Person.objects.all()}
+
+    print(db)
+
+    for req in Request.objects.filter(type="attract"):
+        db[req.requestor.id][req.requestee.id] += 1
+        db[req.requestee.id][req.requestor.id] += 1
+
+
 def helper(eligible, current_room_ids):
+    global db
+
     vals = {i: 0 for i in eligible}
     for person in eligible:
-        vals[person] += Request.objects.filter(requestor__id__in=current_room_ids, requestee=person).count()
-        vals[person] += Request.objects.filter(requestee__id__in=current_room_ids, requestor=person).count()
+        for room_member_id in current_room_ids:
+            vals[person] += db[person.id][room_member_id]
 
     return sorted(eligible, key=lambda x: vals[x], reverse=True)[0]
 
@@ -50,6 +67,8 @@ def generate_solution(gender):
 
 
 def generate_solutions(n):
+    fill_db()
+
     for gender in ("Male", "Female"):
         solutions = []
         hashes = []
