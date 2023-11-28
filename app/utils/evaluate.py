@@ -1,7 +1,35 @@
-from app.models import Request
+from app.models import Request, Person
 
 
 def evaluate_solution(soln: dict, gender):
+    room_inversion = {}
+    running = 0
+    total_failures = 0
+    total_successes = 0
+
+    for room in soln:
+        for id in soln[room]:
+            room_inversion[id] = room
+
+    for person in Person.objects.filter(gender=gender):
+        num_reqs = person.requests.count()
+        num_failures = 0
+
+        if num_reqs == 0: continue
+
+        for req in person.requests.all():
+            if room_inversion[req.requestor_id] != room_inversion[req.requestee_id]:
+                num_failures += 1
+                total_failures += 1
+            else:
+                total_successes += 1
+
+        running += (num_failures / num_reqs) ** 2
+
+    return running, f"{total_failures} failures, {total_successes} successes"
+
+
+def old_evaluate_solution(soln: dict, gender):
     inverted = {}
     num_successes = 0
     num_failures = 0

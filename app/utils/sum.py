@@ -18,8 +18,6 @@ def fill_db():
 
     db = {person.id: {p.id: 0 for p in Person.objects.all()} for person in Person.objects.all()}
 
-    print(db)
-
     for req in Request.objects.filter(type="attract"):
         db[req.requestor.id][req.requestee.id] += 1
         db[req.requestee.id][req.requestor.id] += 1
