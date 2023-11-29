@@ -26,7 +26,10 @@ def student_home(request):
             return HttpResponseBadRequest()
     else:
         if 'sid' in request.session:
-            p = Person.objects.get(id=request.session['sid'])
+            try:
+                p = Person.objects.get(id=request.session['sid'])
+            except Person.DoesNotExist:
+                return redirect('logout')
 
             reqs = p.requests.all().exclude(manual=True)
             all_requestees = [r.requestee.id for r in reqs]
