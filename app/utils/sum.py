@@ -86,7 +86,7 @@ def generate_solutions(n):
                 hashes.append(hash_solution(soln[2]))
                 print(f"\nSaving solution with {soln[0]}")
 
-        print(f"Found {len(solutions)} equivalent solutions with score {soln[0]}")
+        print(f"Found {len(solutions)} equivalent solutions with score {solutions[0][0]}")
 
         i = 1
         for x in solutions:

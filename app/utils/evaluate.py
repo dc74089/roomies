@@ -6,6 +6,7 @@ def evaluate_solution(soln: dict, gender):
     running = 0
     total_failures = 0
     total_successes = 0
+    complete_failures = []
 
     for room in soln:
         for id in soln[room]:
@@ -24,9 +25,13 @@ def evaluate_solution(soln: dict, gender):
             else:
                 total_successes += 1
 
-        running += (num_failures / num_reqs) ** 2
+        if num_reqs != 0 and num_reqs == num_failures:
+            complete_failures.append(person.name)
 
-    return running, f"{total_failures} failures, {total_successes} successes"
+        running += (num_failures / num_reqs) ** 4
+
+    return running, (f"{total_failures} failures, {total_successes} successes. \n"
+                     f"The following people had zero requests granted: {', '.join(complete_failures)}")
 
 
 def old_evaluate_solution(soln: dict, gender):
@@ -61,6 +66,6 @@ def old_evaluate_solution(soln: dict, gender):
     score = 0
     for key in sorted(failure_inversion.keys()):
         out.append(f"{failure_inversion[key]} people had {key} failures")
-        score += failure_inversion[key] * key * key
+        score += failure_inversion[key] * (key ** 4)
 
     return score, f"{num_failures} failures, {num_successes} successes. {', '.join(out)}"

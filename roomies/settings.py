@@ -51,7 +51,7 @@ if DEBUG:
     ])
 
 REQS_PER_STUDENT = 5
-ROOMS = 20
+ROOMS = 19
 STUDENTS_CAN_REPEL = False
 
 LOGIN_URL = "/login"
