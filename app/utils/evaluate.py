@@ -27,8 +27,9 @@ def evaluate_solution(soln: dict, gender):
 
         if num_reqs != 0 and num_reqs == num_failures:
             complete_failures.append(person.name)
+            running += 1000
 
-        running += (num_failures / num_reqs) ** 4
+        running += (num_failures / num_reqs)
 
     return running, (f"{total_failures} failures, {total_successes} successes. \n"
                      f"The following people had zero requests granted: {', '.join(complete_failures)}")
