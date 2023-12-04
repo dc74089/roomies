@@ -65,10 +65,15 @@
               .then(function (data) {
                   $("#modal-title").html(data['name'])
 
-                  $("#modal-body").html("<table class='table table-striped table-hover' id='modal-table'></table>")
+                  $("#modal-body").html("<h2>Requests</h2><table class='table table-striped table-hover' id='modal-table'></table>")
+                      .append("<h2>Requested By</h2><table class='table table-striped table-hover' id='modal-table-2'></table>")
 
                   data['requests'].forEach(function (item) {
                       $("#modal-table").append(`<tr><td>${item['name']}</td><td>${item['satisfied']}</td></tr>`)
+                  })
+
+                  data['requested_by'].forEach(function (item) {
+                      $("#modal-table-2").append(`<tr><td>${item['name']}</td><td>${item['satisfied']}</td></tr>`)
                   })
               })
       }

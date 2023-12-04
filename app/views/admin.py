@@ -124,21 +124,30 @@ def get_stats_for_student(request):
     solution = Solution.objects.get(id=request.GET.get("solution"))
     soln = solution.get_solution()
     room_inversion = {}
-    out = []
+    requests = []
+    requested_by = []
 
     for room in soln:
         for id in soln[room]:
             room_inversion[id] = room
 
     reqs = stu.requests.all()
+    reqd_by = Request.objects.filter(requestee__id=stu.id)
 
     for req in reqs:
-        out.append({
+        requests.append({
             "name": req.requestee.name,
+            "satisfied": "✅" if room_inversion[req.requestor_id] == room_inversion[req.requestee_id] else "❌"
+        })
+
+    for req in reqd_by:
+        requested_by.append({
+            "name": req.requestor.name,
             "satisfied": "✅" if room_inversion[req.requestor_id] == room_inversion[req.requestee_id] else "❌"
         })
 
     return JsonResponse({
         "name": stu.name,
-        "requests": out
+        "requests": requests,
+        "requested_by": requested_by
     })
