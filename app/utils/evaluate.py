@@ -21,12 +21,16 @@ def evaluate_solution(soln: dict, gender):
         if num_reqs == 0: continue
 
         for req in person.requests.all():
-            if room_inversion[req.requestor_id] != room_inversion[req.requestee_id]:
+            try:
+                if room_inversion[req.requestor_id] != room_inversion[req.requestee_id]:
+                    num_failures += 1
+                    total_failures += 1
+                else:
+                    num_successes += 1
+                    total_successes += 1
+            except KeyError:
                 num_failures += 1
                 total_failures += 1
-            else:
-                num_successes += 1
-                total_successes += 1
 
         if num_reqs != 0 and num_reqs == num_failures:
             complete_failures.append(person.name)
