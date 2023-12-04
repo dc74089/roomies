@@ -19,4 +19,5 @@ urlpatterns = [
 
     path('admin/editsolution/<int:id>', admin.view_edit_solution, name="admin_edit_solution"),
     path('admin/editsolution/movestudent', admin.move_student_in_solution, name="admin_move_student"),
+    path('admin/editsolution/getstats', admin.get_stats_for_student, name="admin_get_stats"),
 ]

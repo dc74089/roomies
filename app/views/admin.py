@@ -2,11 +2,12 @@ import codecs
 import csv
 
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponseBadRequest, HttpResponse
+from django.http import HttpResponseBadRequest, HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.views.decorators.csrf import csrf_exempt
 
 from app.models import Person, request_types, Request, Solution, SiteConfig
+from app.utils import evaluate
 
 
 @login_required
@@ -76,7 +77,7 @@ def view_edit_solution(request, id):
 
     for room in soln:
         out[room] = []
-        
+
         for person_id in soln[room]:
             out[room].append(Person.objects.get(id=person_id))
 
@@ -105,9 +106,39 @@ def move_student_in_solution(request):
 
             soln[data['to']].append(data['person'])
 
+            gender = "female" if "female" in solution.name else "male"
+            score, explanation = evaluate.evaluate_solution(soln, gender)
+            solution.explanation = explanation
+
             solution.set_solution(soln)
             solution.save()
 
-            return HttpResponse(status=200)
+            return JsonResponse({"explanation": explanation.replace("\n", "<br>")})
 
     return HttpResponseBadRequest()
+
+
+@login_required
+def get_stats_for_student(request):
+    stu = Person.objects.get(id=request.GET.get("id"))
+    solution = Solution.objects.get(id=request.GET.get("solution"))
+    soln = solution.get_solution()
+    room_inversion = {}
+    out = []
+
+    for room in soln:
+        for id in soln[room]:
+            room_inversion[id] = room
+
+    reqs = stu.requests.all()
+
+    for req in reqs:
+        out.append({
+            "name": req.requestee.name,
+            "satisfied": "✅" if room_inversion[req.requestor_id] == room_inversion[req.requestee_id] else "❌"
+        })
+
+    return JsonResponse({
+        "name": stu.name,
+        "requests": out
+    })

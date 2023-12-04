@@ -7,6 +7,7 @@ def evaluate_solution(soln: dict, gender):
     total_failures = 0
     total_successes = 0
     complete_failures = []
+    stats = {}
 
     for room in soln:
         for id in soln[room]:
@@ -15,6 +16,7 @@ def evaluate_solution(soln: dict, gender):
     for person in Person.objects.filter(gender=gender):
         num_reqs = person.requests.count()
         num_failures = 0
+        num_successes = 0
 
         if num_reqs == 0: continue
 
@@ -23,6 +25,7 @@ def evaluate_solution(soln: dict, gender):
                 num_failures += 1
                 total_failures += 1
             else:
+                num_successes += 1
                 total_successes += 1
 
         if num_reqs != 0 and num_reqs == num_failures:
@@ -31,8 +34,16 @@ def evaluate_solution(soln: dict, gender):
 
         running += (num_failures / num_reqs)
 
+        if f"{num_successes}/{person.requests.count()}" not in stats:
+            stats[f"{num_successes}/{person.requests.count()}"] = 0
+
+        stats[f"{num_successes}/{person.requests.count()}"] += 1
+
+    stats_str = "\n".join([f"{x}: {stats[x]}" for x in stats])
+
     return running, (f"{total_failures} failures, {total_successes} successes. \n"
-                     f"The following people had zero requests granted: {', '.join(complete_failures)}")
+                     f"The following people had zero requests granted: {', '.join(complete_failures)}\n\n"
+                     f"{stats_str}")
 
 
 def old_evaluate_solution(soln: dict, gender):
