@@ -39,15 +39,15 @@ def evaluate_solution(soln: dict, gender):
         running += (num_failures / num_reqs)
 
         if f"{num_successes}/{person.requests.count()}" not in stats:
-            stats[f"{num_successes}/{person.requests.count()}"] = 0
+            stats[f"{num_successes} granted requests"] = 0
 
-        stats[f"{num_successes}/{person.requests.count()}"] += 1
+        stats[f"{num_successes} granted requests"] += 1
 
-    stats_str = "\n".join([f"{x}: {stats[x]}" for x in stats])
+    line1 = f"{total_failures} failures, {total_successes} successes. Score: {round(running, 3)} \n"
+    line2 = f"The following people had zero requests granted: {', '.join(complete_failures)}\n\n" if complete_failures else "Everyone had at least one request granted!\n\n"
+    line3 = "\n".join([f"{x}: {stats[x]}" for x in stats])
 
-    return running, (f"{total_failures} failures, {total_successes} successes. \n"
-                     f"The following people had zero requests granted: {', '.join(complete_failures)}\n\n"
-                     f"{stats_str}")
+    return running, (line1 + line2 + line3)
 
 
 def old_evaluate_solution(soln: dict, gender):
