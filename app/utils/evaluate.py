@@ -38,7 +38,7 @@ def evaluate_solution(soln: dict, gender):
 
         running += (num_failures / num_reqs)
 
-        if f"{num_successes}/{person.requests.count()}" not in stats:
+        if f"{num_successes} granted requests" not in stats:
             stats[f"{num_successes} granted requests"] = 0
 
         stats[f"{num_successes} granted requests"] += 1
