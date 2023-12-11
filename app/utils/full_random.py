@@ -24,7 +24,8 @@ def generate_random_room(gender):
     s = Solution(
         name=f"Random {gender} rooms",
         solution=json.dumps(rooms),
-        explanation="Random Rooms"
+        explanation="Random Rooms",
+        strategy="Random"
     )
 
     s.save()

@@ -61,6 +61,7 @@ class Solution(models.Model):
     solution = models.TextField()  # Format: uuid as keys, list of person id as vals
     explanation = models.TextField()
     added = models.DateTimeField(auto_now_add=True)
+    strategy = models.TextField(null=True, blank=True)
 
     def set_solution(self, soln_dict):
         self.solution = json.dumps(soln_dict)

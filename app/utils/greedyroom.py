@@ -1,4 +1,5 @@
 import json
+import math
 import random
 
 from django.conf import settings
@@ -46,6 +47,8 @@ def generate_solution(gender):
     people = list(Person.objects.filter(gender=gender))
     random.shuffle(people)
 
+    per_room = len(people) // settings.ROOMS
+
     seeds = people[:settings.ROOMS]
 
     for seed in seeds:
@@ -53,8 +56,8 @@ def generate_solution(gender):
         placed.append(seed)
         next_room += 1
 
-    while len(placed) < len(people):
-        for room in out.keys():
+    for room in out.keys():
+        for _ in range(per_room):
             if len(placed) == len(people): break
 
             eligible = [i for i in people if i not in placed]
@@ -98,7 +101,7 @@ def generate_solutions(n):
                 name=f"{gender} rooms generated {timezone.now().strftime('%Y-%m-%d %H:%M')} (#{i})",
                 solution=json.dumps(x[2]),
                 explanation=x[1],
-                strategy="Sum"
+                strategy="Greedy Room"
             )
 
             s.save()

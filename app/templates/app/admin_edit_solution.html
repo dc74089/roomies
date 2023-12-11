@@ -86,6 +86,7 @@
       <div class="jumbotron">
         <h1>Edit Rooms List</h1>
         <h4>{{ solution.name }}</h4>
+        {% if solution.strategy %}<h5>{{ solution.strategy }}</h5>{% endif %}
         <p id="explanation">{{ solution.explanation | linebreaksbr }}</p>
       </div>
     </div>

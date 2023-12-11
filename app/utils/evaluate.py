@@ -21,16 +21,17 @@ def evaluate_solution(soln: dict, gender):
         if num_reqs == 0: continue
 
         for req in person.requests.all():
-            try:
-                if room_inversion[req.requestor_id] != room_inversion[req.requestee_id]:
+            if req.type == "attract":
+                try:
+                    if room_inversion[req.requestor_id] != room_inversion[req.requestee_id]:
+                        num_failures += 1
+                        total_failures += 1
+                    else:
+                        num_successes += 1
+                        total_successes += 1
+                except KeyError:
                     num_failures += 1
                     total_failures += 1
-                else:
-                    num_successes += 1
-                    total_successes += 1
-            except KeyError:
-                num_failures += 1
-                total_failures += 1
 
         if num_reqs != 0 and num_reqs == num_failures:
             complete_failures.append(person.name)
@@ -42,6 +43,17 @@ def evaluate_solution(soln: dict, gender):
             stats[f"{num_successes} granted requests"] = 0
 
         stats[f"{num_successes} granted requests"] += 1
+
+    for req in Request.objects.filter(manual=True):
+        try:
+            if req.type == "forbid":
+                if room_inversion[req.requestor_id] == room_inversion[req.requestee_id]:
+                    running += 1000000
+            if req.type == "require":
+                if room_inversion[req.requestor_id] != room_inversion[req.requestee_id]:
+                    running += 1000000
+        except ValueError:
+            pass
 
     line1 = f"{total_failures} failures, {total_successes} successes. Score: {round(running, 3)} \n"
     line2 = f"The following people had zero requests granted: {', '.join(complete_failures)}\n\n" if complete_failures else "Everyone had at least one request granted!\n\n"

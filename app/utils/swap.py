@@ -4,6 +4,7 @@ import math
 import random
 import signal
 
+from django.conf import settings
 from django.utils import timezone
 from tqdm import tqdm
 
@@ -19,7 +20,7 @@ def do_stop(_1, _2):
     print("\n\nWill stop after this iteration\n")
 
 
-def tune_solution(solution, gender, depth):
+def tune_solution(solution, gender, depth, strategy="?"):
     global stop
     rooms = []
     inversion = {}
@@ -74,6 +75,26 @@ def tune_solution(solution, gender, depth):
                 base = new
                 swaps += 1
 
+        base, _desc = evaluate_solution({room: [x for x in inversion.keys() if inversion[x] == room] for room in rooms},
+                                        gender)
+
+        print("Shuffling into empty rooms")
+        for p in tqdm(shuffled_keys):
+            for room in rooms:
+                if sum(x == room for x in inversion.values()) >= settings.ROOM_MAX_CAPACITY: continue
+                old = inversion[p]
+                inversion[p] = room
+
+                new, _desc = evaluate_solution(
+                    {room: [x for x in inversion.keys() if inversion[x] == room] for room in rooms}, gender)
+
+                if base <= new:  # If base better than new, swap back
+                    inversion[p] = old
+                else:
+                    print(f"\n{base} -> {new}")
+                    base = new
+                    swaps += 1
+
         print(f"Did {swaps} swaps\n")
 
         if swaps == 0: break
@@ -86,7 +107,8 @@ def tune_solution(solution, gender, depth):
         solution=json.dumps(final),
         explanation=f"Score went from {original_score} to {final_score}. \n\n"
                     f"Orig: {original_desc} \n\n"
-                    f"New: {final_desc}"
+                    f"New: {final_desc}",
+        strategy=f"Tuned {strategy}"
     )
 
     s.save()
@@ -99,4 +121,4 @@ def tune_solution_by_id(id, depth):
     soln = s.get_solution()
     gender = "female" if "female" in s.name.lower() else "male"
 
-    return tune_solution(soln, gender, depth)
+    return tune_solution(soln, gender, depth, s.strategy)
