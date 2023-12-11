@@ -52,7 +52,7 @@ def evaluate_solution(soln: dict, gender):
             if req.type == "require":
                 if room_inversion[req.requestor_id] != room_inversion[req.requestee_id]:
                     running += 1000000
-        except ValueError:
+        except KeyError:
             pass
 
     line1 = f"{total_failures} failures, {total_successes} successes. Score: {round(running, 3)} \n"
