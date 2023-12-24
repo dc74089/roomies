@@ -68,6 +68,17 @@ def toggle_student_availability(request):
     return redirect('index')
 
 
+def helper_reqs_granted_in_soln(p_id, room):
+    x = 0
+    p = Person.objects.get(id=p_id)
+
+    for req in p.requests.all():
+        if req.requestee_id in room:
+            x += 1
+
+    return x
+
+
 @login_required
 def view_edit_solution(request, id):
     solution = Solution.objects.get(id=id)
@@ -79,7 +90,7 @@ def view_edit_solution(request, id):
         out[room] = []
 
         for person_id in soln[room]:
-            out[room].append(Person.objects.get(id=person_id))
+            out[room].append((Person.objects.get(id=person_id), helper_reqs_granted_in_soln(person_id, soln[room])))
 
     return render(request, "app/admin_edit_solution.html", {
         "solution": solution,
@@ -113,7 +124,15 @@ def move_student_in_solution(request):
             solution.set_solution(soln)
             solution.save()
 
-            return JsonResponse({"explanation": explanation.replace("\n", "<br>")})
+            counts = {}
+            for room in soln:
+                for stu in soln[room]:
+                    counts[stu] = helper_reqs_granted_in_soln(stu, soln[room])
+
+            return JsonResponse({
+                "explanation": explanation.replace("\n", "<br>"),
+                "counts": counts
+            })
 
     return HttpResponseBadRequest()
 

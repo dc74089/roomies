@@ -50,6 +50,10 @@
           }).then(function (data) {
               $("#person-" + stu).detach().appendTo("#table-" + table_id)
               $("#explanation").html(data['explanation'])
+              
+              for (let key in data['counts']) {
+                  $("#count-" + key).html(data['counts'][key])
+              }
           })
 
 
@@ -98,10 +102,12 @@
             <h2 class="card-title">{{ room }}</h2>
             <table class="table table-striped table-hover" id="table-{{ room|cut:' ' }}">
               <tbody>
-              {% for person in people %}
+              {% for person, count in people %}
                 <tr id="person-{{ person.id }}">
                   <td><a class="text-secondary" href="#"
-                         onclick="show_modal({{ person.id }}); return false;">{{ person.name }}</a></td>
+                         onclick="show_modal({{ person.id }}); return false;">
+                    {{ person.name }} (<span id="count-{{ person.id }}">{{ count }}</span>)
+                  </a></td>
                   <td class="d-print-none">
                     <a href="#" class="move" onclick="move_student({{ person.id }}); return false;">Move</a>
                   </td>

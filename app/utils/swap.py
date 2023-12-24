@@ -52,9 +52,30 @@ def tune_solution(solution, gender, depth, strategy="?"):
 
         if depth == -1 and base < 1000:
             print("All students have at least one request satisfied! Exiting.")
+            break
 
         shuffled_keys = list(inversion.keys())
         random.shuffle(shuffled_keys)
+
+        print("Shuffling into empty rooms")
+        for p in tqdm(shuffled_keys):
+            for room in rooms:
+                if sum(x == room for x in inversion.values()) >= settings.ROOM_MAX_CAPACITY: continue
+                old = inversion[p]
+                inversion[p] = room
+
+                new, _desc = evaluate_solution(
+                    {room: [x for x in inversion.keys() if inversion[x] == room] for room in rooms}, gender)
+
+                if base <= new:  # If base better than new, swap back
+                    inversion[p] = old
+                else:
+                    print(f"\n{base} -> {new}")
+                    base = new
+                    swaps += 1
+
+        base, _desc = evaluate_solution({room: [x for x in inversion.keys() if inversion[x] == room] for room in rooms},
+                                        gender)
 
         for a, b in tqdm(itertools.combinations(shuffled_keys, 2), total=math.comb(len(inversion.keys()), 2)):
             if inversion[a] == inversion[b]: continue
@@ -74,26 +95,6 @@ def tune_solution(solution, gender, depth, strategy="?"):
                 print(f"\n{base} -> {new}")
                 base = new
                 swaps += 1
-
-        base, _desc = evaluate_solution({room: [x for x in inversion.keys() if inversion[x] == room] for room in rooms},
-                                        gender)
-
-        print("Shuffling into empty rooms")
-        for p in tqdm(shuffled_keys):
-            for room in rooms:
-                if sum(x == room for x in inversion.values()) >= settings.ROOM_MAX_CAPACITY: continue
-                old = inversion[p]
-                inversion[p] = room
-
-                new, _desc = evaluate_solution(
-                    {room: [x for x in inversion.keys() if inversion[x] == room] for room in rooms}, gender)
-
-                if base <= new:  # If base better than new, swap back
-                    inversion[p] = old
-                else:
-                    print(f"\n{base} -> {new}")
-                    base = new
-                    swaps += 1
 
         print(f"Did {swaps} swaps\n")
 
