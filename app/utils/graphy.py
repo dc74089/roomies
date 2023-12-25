@@ -56,7 +56,9 @@ def split_by_id(soln_id):
 
         G = nx.Graph()
 
-        for p in room:
+        for p_id in room:
+            p = Person.objects.get(id=p_id)
+
             G.add_node(p)
 
             for req in p.requests.all():
