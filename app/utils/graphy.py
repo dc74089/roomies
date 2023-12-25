@@ -42,6 +42,46 @@ def ideal_splits(rooms):
     return {f"Room {n}": [s.id for s in stus] for n, stus in zip(range(1, 1 + len(out)), out)}
 
 
+def split_by_id(soln_id):
+    s = Solution.objects.get(id=soln_id)
+    gender = "female" if "female" in s.name.lower() else "male"
+    rooms = s.get_solution()
+
+    out = list(rooms)
+
+    for room in rooms:
+        G = nx.Graph()
+
+        for p in room:
+            G.add_node(p)
+
+            for req in p.requests.all():
+                if req.requestee not in room: continue
+                if not G.has_edge(p, req.requestee):
+                    G.add_edge(
+                        p,
+                        req.requestee,
+                        weight=4 if Request.objects.filter(requestor=req.requestee, requestee=p).exists() else 1
+                    )
+
+        x = nx.community.kernighan_lin_bisection(G)
+        y = list(x)
+
+        out.extend(y)
+
+    new_soln = {f"Room {n}": [s.id for s in stus] for n, stus in zip(range(1, 1 + len(out)), out)}
+    score = evaluate_solution(new_soln, gender)
+
+    split_soln = Solution(
+        name=f"Graphy Even-Split {gender} Rooms",
+        strategy="Louvain B Split",
+        explanation=f"Louvain B Split scores: {score[1]}"
+    )
+
+    split_soln.set_solution(new_soln)
+    split_soln.save()
+
+
 def generate_solution(gender='female'):
     G = nx.DiGraph()
 
@@ -58,7 +98,7 @@ def generate_solution(gender='female'):
     soln2_score = evaluate_solution(soln2, gender)
 
     s2 = Solution(
-        name=f"Graphy {gender} rooms",
+        name=f"Graphy {gender} Rooms",
         strategy="Louvain B",
         explanation=f"Louvain B scores: {soln2_score[1]}"
     )
@@ -70,7 +110,7 @@ def generate_solution(gender='female'):
     z_score = evaluate_solution(z, gender)
 
     zs = Solution(
-        name=f"Graphy Split {gender} rooms",
+        name=f"Graphy Split {gender} Rooms",
         strategy="Louvain B Split",
         explanation=f"Louvain B Split scores: {z_score[1]}"
     )
