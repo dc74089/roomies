@@ -92,6 +92,9 @@
         <h4>{{ solution.name }}</h4>
         {% if solution.strategy %}<h5>{{ solution.strategy }}</h5>{% endif %}
         <p id="explanation">{{ solution.explanation | linebreaksbr }}</p>
+        {% if request.user.is_staff %}
+          <a class="btn btn-primary" href="{% url 'admin:app_solution_change' solution.id %}">Edit in DB</a> 
+        {% endif %}
       </div>
     </div>
 
