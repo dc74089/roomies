@@ -47,11 +47,13 @@ def split_by_id(soln_id):
     gender = "female" if "female" in s.name.lower() else "male"
     rooms = s.get_solution()
 
-    out = list(rooms)
+    out = {}
 
-    for room in rooms:
+    for room_name, room in rooms.items():
+        print(room)
+
         if len(room) * 2 <= settings.ROOM_MAX_CAPACITY:
-            out.append(room)
+            out[room_name] = [Person.objects.get(id=pid) for pid in room]
             continue
 
         G = nx.Graph()
@@ -73,10 +75,12 @@ def split_by_id(soln_id):
         x = nx.community.kernighan_lin_bisection(G)
         y = list(x)
 
-        out.extend(y)
+        out[f"{room_name}A"] = list(y[0])
+        out[f"{room_name}B"] = list(y[1])
 
-    new_soln = {f"Room {n}": [s.id for s in stus] for n, stus in zip(range(1, 1 + len(out)), out)}
-    score = evaluate_solution(new_soln, gender)
+    out = {key: [x.id for x in val] for key, val in out.items()}
+
+    score = evaluate_solution(out, gender)
 
     split_soln = Solution(
         name=f"Graphy Even-Split {gender} Rooms",
@@ -84,7 +88,7 @@ def split_by_id(soln_id):
         explanation=f"Louvain B Split scores: {score[1]}"
     )
 
-    split_soln.set_solution(new_soln)
+    split_soln.set_solution(out)
     split_soln.save()
 
 
