@@ -50,6 +50,10 @@ def split_by_id(soln_id):
     out = list(rooms)
 
     for room in rooms:
+        if len(room) * 2 <= settings.ROOM_MAX_CAPACITY:
+            out.append(room)
+            continue
+
         G = nx.Graph()
 
         for p in room:
