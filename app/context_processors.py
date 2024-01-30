@@ -10,4 +10,4 @@ def add_settings(request):
 
 
 def add_siteconfig(request):
-    return {conf.id: bool(conf) for conf in SiteConfig.objects.all()}
+    return {conf.id: conf for conf in SiteConfig.objects.all()}

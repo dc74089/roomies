@@ -3,14 +3,14 @@ import json
 from django.conf import settings
 from tqdm import tqdm
 
-from app.models import Person, Solution
+from app.models import Person, Solution, SiteConfig
 from app.utils import swap, evaluate
 
 
 def generate_random_room(gender):
     rooms = {}
 
-    for i in range(settings.ROOMS):
+    for i in range(SiteConfig.objects.get(id="rooms").num):
         rooms[f"Room {i + 1}"] = []
 
     i = 0
@@ -19,7 +19,7 @@ def generate_random_room(gender):
 
         rooms[f"Room {i}"].append(person.id)
 
-        i %= settings.ROOMS
+        i %= SiteConfig.objects.get(id="rooms").num
 
     s = Solution(
         name=f"Random {gender} rooms",

@@ -50,11 +50,6 @@ if DEBUG:
         'localhost'
     ])
 
-REQS_PER_STUDENT = 5
-ROOMS = 10
-ROOM_MAX_CAPACITY = 10
-STUDENTS_CAN_REPEL = False
-
 LOGIN_URL = "/login"
 
 # Application definition

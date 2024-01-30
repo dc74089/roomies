@@ -12,10 +12,11 @@ def student_home(request):
     if request.method == "POST":
         if 'sid' in request.POST and 'password' in request.POST:
             data = request.POST
+            sid = Person.unhash_id(data['sid'])
 
-            if data['sid'] == data['password']:
+            if sid == data['password']:
                 request.session.clear()
-                request.session['sid'] = data['sid']
+                request.session['sid'] = sid
                 request.session.save()
 
                 return redirect('student_home')
@@ -40,7 +41,7 @@ def student_home(request):
                 "person": p,
                 "requests": reqs,
                 "others": eligible_others,
-                "requests_remaining": settings.REQS_PER_STUDENT - len(reqs)
+                "requests_remaining": SiteConfig.objects.get(id="reqs_per_student").num - len(reqs)
             })
         else:
             return render()

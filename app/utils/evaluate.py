@@ -21,6 +21,10 @@ def evaluate_solution(soln: dict, gender):
         if num_reqs == 0: continue
 
         for req in person.requests.all():
+            if req.requestee.id not in room_inversion or req.requestor.id not in room_inversion:
+                num_reqs -= 1
+                continue
+
             if req.type == "attract":
                 try:
                     if room_inversion[req.requestor_id] != room_inversion[req.requestee_id]:

@@ -3,19 +3,19 @@ from pprint import pprint
 import networkx as nx
 from django.conf import settings
 
-from app.models import Person, Request, Solution
+from app.models import Person, Request, Solution, SiteConfig
 from app.utils.evaluate import evaluate_solution
 
 
 def ideal_splits(rooms):
     out = list(rooms)
 
-    while any([len(room) > settings.ROOM_MAX_CAPACITY for room in rooms]):
+    while any([len(room) > SiteConfig.objects.get(id="room_max_capacity").num for room in rooms]):
         pprint("ITER_START")
         pprint(rooms)
         out = []
         for room in rooms:
-            if len(room) <= settings.ROOM_MAX_CAPACITY:
+            if len(room) <= SiteConfig.objects.get(id="room_max_capacity").num:
                 out.append(room)
                 continue
 
@@ -52,7 +52,7 @@ def split_by_id(soln_id):
     for room_name, room in rooms.items():
         print(room)
 
-        if len(room) * 2 <= settings.ROOM_MAX_CAPACITY:
+        if len(room) * 2 <= SiteConfig.objects.get(id="room_max_capacity").num:
             out[room_name] = [Person.objects.get(id=pid) for pid in room]
             continue
 
@@ -128,7 +128,13 @@ def generate_solution(gender='female'):
     zs.set_solution(z)
     zs.save()
 
+    return [s2.id, zs.id]
+
 
 def generate_solutions():
-    generate_solution("male")
-    generate_solution("female")
+    out = []
+
+    out.extend(generate_solution("male"))
+    out.extend(generate_solution("female"))
+
+    return out

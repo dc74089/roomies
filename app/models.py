@@ -1,4 +1,6 @@
+import hashlib
 import json
+import math
 
 from django.db import models
 
@@ -6,6 +8,7 @@ from django.db import models
 class SiteConfig(models.Model):
     id = models.CharField(max_length=100, primary_key=True)
     val = models.BooleanField(default=False)
+    num = models.IntegerField(default=0)
 
     def __str__(self):
         return self.id.replace("_", " ").title()
@@ -13,9 +16,16 @@ class SiteConfig(models.Model):
     def __bool__(self):
         return self.val
 
+    def __int__(self):
+        return self.num
+
     @classmethod
     def init_all(cls):
         SiteConfig.objects.get_or_create(id="open_for_students")
+        SiteConfig.objects.get_or_create(id="reqs_per_student")
+        SiteConfig.objects.get_or_create(id="rooms")
+        SiteConfig.objects.get_or_create(id="room_max_capacity")
+        SiteConfig.objects.get_or_create(id="students_can_repel")
 
 
 # Create your models here.
@@ -33,6 +43,13 @@ class Person(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.id})"
+
+    def hashed_id(self):
+        return "1" + str(int(self.id) ** 2)[::-1]
+
+    @classmethod
+    def unhash_id(cls, id):
+        return str(round(math.sqrt(int(str(id)[:0:-1]))))
 
 
 request_types = (

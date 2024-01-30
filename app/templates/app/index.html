@@ -21,7 +21,7 @@
               <select class="selectpicker w-100" data-live-search="true" name="sid">
                 <option value="">Choose your Name</option>
                 {% for person in people %}
-                  <option value="{{ person.id }}">{{ person.name }}</option>
+                  <option value="{{ person.hashed_id }}">{{ person.name }}</option>
                 {% endfor %}
               </select>
             </div>

@@ -1,3 +1,4 @@
+import csv
 import json
 
 from app.models import Request, supported_genders, Person
@@ -17,6 +18,23 @@ def to_json():
         ]
 
     return json.dumps(obj)
+
+
+def to_csv():
+    with open("fulldata.csv", 'w') as fil:
+        header = ["Name", "Gender", "Num Requestors", "Requestors", "Requests"]
+
+        writer = csv.DictWriter(fil, fieldnames=header)
+        writer.writeheader()
+
+        for person in Person.objects.all():
+            writer.writerow({
+                "Name": person.name,
+                "Gender": person.gender,
+                "Num Requestors": Request.objects.filter(requestee=person).count(),
+                "Requestors": ", ".join([req.requestor.name for req in Request.objects.filter(requestee=person)]),
+                "Requests": ", ".join([req.requestee.name for req in Request.objects.filter(requestor=person)])
+            })
 
 
 def to_edgelist():

@@ -6,10 +6,9 @@ from django.conf import settings
 from django.utils import timezone
 from tqdm import tqdm
 
-from app.models import Person, Request, Solution
+from app.models import Person, Request, Solution, SiteConfig
 from app.utils.evaluate import evaluate_solution
 from app.utils.hash import hash_solution
-
 
 db = None
 
@@ -47,9 +46,9 @@ def generate_solution(gender):
     people = list(Person.objects.filter(gender=gender))
     random.shuffle(people)
 
-    per_room = len(people) // settings.ROOMS
+    per_room = len(people) // SiteConfig.objects.get(id="rooms").num
 
-    seeds = people[:settings.ROOMS]
+    seeds = people[:SiteConfig.objects.get(id="rooms").num]
 
     for seed in seeds:
         out[f"Room {next_room}"] = [seed.id]
@@ -72,12 +71,13 @@ def generate_solution(gender):
 
 
 def generate_solutions(n):
+    out = []
     fill_db()
 
     for gender in ("Male", "Female"):
         solutions = []
         hashes = []
-        best_score = 2**30
+        best_score = 2 ** 30
 
         for _ in tqdm(range(n)):
             soln = (generate_solution(gender.lower()))
@@ -106,3 +106,7 @@ def generate_solutions(n):
 
             s.save()
             i += 1
+
+            out.append(s.id)
+
+    return out

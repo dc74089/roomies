@@ -8,7 +8,7 @@ from django.conf import settings
 from django.utils import timezone
 from tqdm import tqdm
 
-from app.models import Solution
+from app.models import Solution, SiteConfig
 from app.utils.evaluate import evaluate_solution
 
 stop = False
@@ -60,7 +60,7 @@ def tune_solution(solution, gender, depth, strategy="?"):
         print("Shuffling into empty rooms")
         for p in tqdm(shuffled_keys):
             for room in rooms:
-                if sum(x == room for x in inversion.values()) >= settings.ROOM_MAX_CAPACITY: continue
+                if sum(x == room for x in inversion.values()) >= SiteConfig.objects.get(id="room_max_capacity").num: continue
                 old = inversion[p]
                 inversion[p] = room
 
