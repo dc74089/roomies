@@ -26,6 +26,7 @@ class SiteConfig(models.Model):
         SiteConfig.objects.get_or_create(id="rooms")
         SiteConfig.objects.get_or_create(id="room_max_capacity")
         SiteConfig.objects.get_or_create(id="students_can_repel")
+        SiteConfig.objects.get_or_create(id="site")
 
 
 # Create your models here.
@@ -71,6 +72,23 @@ class Request(models.Model):
             return f"*{self.requestor.name} {self.get_type_display()} {self.requestee.name}*"
         else:
             return f"{self.requestor.name} {self.get_type_display()} {self.requestee.name}"
+
+
+class Site(models.Model):
+    name = models.TextField()
+    room_desc = models.TextField(default="{}")
+    capacity = models.IntegerField(default=0)
+
+    def set_site(self, site_dict):
+        self.room_desc = json.dumps(site_dict)
+
+        self.capacity = sum([int(x['room_capacity']) * int(x['room_count']) for x in site_dict['blocks']])
+
+    def get_site(self):
+        return json.loads(self.room_desc)
+
+    def __str__(self):
+        return self.name
 
 
 class Solution(models.Model):
