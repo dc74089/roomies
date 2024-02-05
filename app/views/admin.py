@@ -68,12 +68,14 @@ def toggle_student_availability(request):
     return redirect('index')
 
 
+@login_required
 def sites(request):
     sites = Site.objects.all()
 
     return render(request, "app/admin_sites.html", {"sites": sites})
 
 
+@login_required
 @csrf_exempt
 def edit_site(request):
     if request.method == "GET":
