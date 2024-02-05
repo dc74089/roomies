@@ -91,8 +91,14 @@ class Site(models.Model):
         return self.name
 
 
+class Problem(models.Model):
+    students = models.ManyToManyField("Person", related_name="problems")
+    rooms = models.TextField(null=True, blank=True)
+
+
 class Solution(models.Model):
     name = models.TextField()
+    problem = models.ForeignKey("Problem", on_delete=models.SET_NULL, null=True, blank=True)
     solution = models.TextField()  # Format: uuid as keys, list of person id as vals
     explanation = models.TextField()
     added = models.DateTimeField(auto_now_add=True)

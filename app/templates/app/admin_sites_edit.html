@@ -7,7 +7,13 @@
   <script src="{% static 'app/bootstrap-select.js' %}"></script>
 
   <script>
+      let lock = false;
+      
       function add_block() {
+          if (lock) {return}
+          
+          lock = true;
+          
           $.post("{% url 'admin_edit_site' %}", {
               "id": {{ s.id }},
               "action": "add_block",
@@ -21,6 +27,10 @@
       }
 
       function delete_block(n) {
+          if (lock) {return}
+          
+          lock = true;
+          
           $.post("{% url 'admin_edit_site' %}", {
               "id": {{ s.id }},
               "action": "del_block",
@@ -82,7 +92,6 @@
         <tr>
           <th>Name</th>
           <th>Description</th>
-          <th>Edit</th>
           <th>Delete</th>
         </tr>
         </thead>
@@ -91,7 +100,6 @@
           <tr>
             <td>{{ block.name }}</td>
             <td>{{ block.description }}</td>
-            <td></td>
             <td><a class="btn btn-danger" onclick="delete_block({{ forloop.counter0 }})">Delete</a></td>
           </tr>
         {% endfor %}
