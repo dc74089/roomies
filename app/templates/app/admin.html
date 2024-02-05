@@ -27,7 +27,7 @@
           <h2 class="card-title">Step 2: Collect Requests</h2>
           <p>Currently configured to collect <code>{{ reqs_per_student.num }}</code> requests per student. This can
             be changed in the DB tab.</p>
-          {% comment %}<p><a href="{% url 'admin_create_request' %}" class="btn btn-success">Click here to add or edit manual requests</a></p>{% endcomment %}
+          <p><a href="{% url 'admin_create_request' %}" class="btn btn-success">Click here to add or edit manual requests</a></p>
           <p><a href="{% url 'admin:app_request_changelist' %}" class="btn btn-secondary">Click here to view and edit
             all student requests</a></p>
 
@@ -62,14 +62,21 @@
       </div>
       <div class="card mb-3">
         <div class="card-body">
-          <h2 class="card-title">Step 3: Generate Room List</h2>
+          <h2 class="card-title">Step 3: Configure Site</h2>
+          <p>You must configure the quantity, capacity, and gender designation of rooms before generating a room list.</p>
+          <a class="btn btn-success" href="{% url 'admin_sites' %}">Create or Edit Site</a>
+        </div>
+      </div>
+      <div class="card mb-3">
+        <div class="card-body">
+          <h2 class="card-title">Step 4: Generate Room List</h2>
           <p>Currently configured to select <code>{{ rooms.num }}</code> rooms. This can be changed in the DB tab.</p>
           <a href="#" class="btn btn-success" onclick="alert('This needs to be done through the backend right now. Talk to Dominic!')">Generate</a>
         </div>
       </div>
       <div class="card mb-3">
         <div class="card-body">
-          <h2 class="card-title">Step 4: Fine-Tune Room Lists</h2>
+          <h2 class="card-title">Step 5: Fine-Tune Room Lists</h2>
           <p>Click below to view a generated room list.</p>
           <p><b>Newest lists are at the top</b></p>
           <ul>

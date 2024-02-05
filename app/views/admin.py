@@ -6,7 +6,7 @@ from django.http import HttpResponseBadRequest, HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.views.decorators.csrf import csrf_exempt
 
-from app.models import Person, request_types, Request, Solution, SiteConfig
+from app.models import Person, request_types, Request, Solution, SiteConfig, Site, supported_genders
 from app.utils import evaluate
 
 
@@ -68,6 +68,63 @@ def toggle_student_availability(request):
     return redirect('index')
 
 
+def sites(request):
+    sites = Site.objects.all()
+
+    return render(request, "app/admin_sites.html", {"sites": sites})
+
+
+@csrf_exempt
+def edit_site(request):
+    if request.method == "GET":
+        if 'id' in request.GET:
+            site = Site.objects.get(id=request.GET['id'])
+            return render(request, "app/admin_sites_edit.html", {
+                "s": site,
+                "genders": supported_genders,
+                "blocks": site.get_site().get("blocks", [])
+            })
+        else:
+            return HttpResponseBadRequest()
+    elif request.method == "POST":
+        data = request.POST
+
+        if 'action' in data:
+            # ADD BLOCK
+            if data['action'] == 'add_block':
+                if all([x in data for x in
+                        ["id", "block_name", "block_room_count", "block_room_capacity", "block_gender"]]):
+                    site = Site.objects.get(id=data['id'])
+                    site_dict = site.get_site()
+
+                    if 'blocks' not in site_dict:
+                        site_dict['blocks'] = []
+
+                    site_dict['blocks'].append({
+                        "name": data['block_name'],
+                        "room_count": data['block_room_count'],
+                        "room_capacity": data['block_room_capacity'],
+                        "gender": data['block_gender'],
+                        "description": f"{data['block_room_count']} {data['block_gender']} rooms each sleeping {data['block_room_capacity']}"
+                    })
+
+                    site.set_site(site_dict)
+                    site.save()
+
+                    return HttpResponse(status=200)
+            if data['action'] == "del_block":
+                if all([x in data for x in ["id", "block_idx"]]):
+                    site = Site.objects.get(id=data['id'])
+                    site_dict = site.get_site()
+
+                    site_dict['blocks'].pop(int(data['block_idx']))
+
+                    site.set_site(site_dict)
+                    site.save()
+
+                    return HttpResponse(status=200)
+
+
 def helper_reqs_granted_in_soln(p_id, room):
     x = 0
     p = Person.objects.get(id=p_id)
@@ -92,7 +149,7 @@ def view_edit_solution(request, id):
         for person_id in soln[room]:
             out[room].append((Person.objects.get(id=person_id), helper_reqs_granted_in_soln(person_id, soln[room])))
 
-    return render(request, "app/admin_edit_solution.html", {
+    return render(request, "app/admin_solution_edit.html", {
         "solution": solution,
         "rooms": out
     })

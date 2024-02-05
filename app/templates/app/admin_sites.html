@@ -1,0 +1,50 @@
+{% extends 'app/base.html' %}
+
+{% block content %}
+  <div class="row">
+    <div class="col-12 col-lg-4">
+      <div class="card mb-3">
+        <div class="card-body">
+          <h2 class="card-title text-center">Sites</h2>
+          <p>A "site" is a description of the overnight accommodations of your trip, including the number of rooms,
+            the capacity of rooms, and the gender designation of rooms.</p>
+        </div>
+      </div>
+
+
+      <div class="card mb-3">
+        <div class="card-body">
+          <h4 class="text-center">Create New Site</h4>
+          <form action="{% url 'admin_sites' %}" method="post">
+            {% csrf_token %}
+            <div class="form-group">
+              <label for="new_site_name">Site Name</label>
+              <input class="form-control" name="site_name" id="new_site_name" placeholder="Enter Site Name">
+            </div>
+            <button class="btn btn-success">Create</button>
+          </form>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-lg-8">
+      <table class="table table-hover table-striped">
+        <thead>
+        <tr>
+          <th>Site Name</th>
+          <th>Total Capacity</th>
+          <th>Edit</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for s in sites %}
+          <tr>
+          <td>{{ s.name }}</td>
+          <td>{{ s.capacity }}</td>
+          <td><a class="btn btn-secondary" href="{% url 'admin_edit_site' %}?id={{ s.id }}">Edit</a> </td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endblock %}
