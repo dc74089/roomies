@@ -100,6 +100,7 @@ class Solution(models.Model):
     name = models.TextField()
     problem = models.ForeignKey("Problem", on_delete=models.SET_NULL, null=True, blank=True)
     solution = models.TextField()  # Format: uuid as keys, list of person id as vals
+    capacities = models.TextField(default="{}")
     explanation = models.TextField()
     added = models.DateTimeField(auto_now_add=True)
     strategy = models.TextField(null=True, blank=True)
@@ -109,6 +110,12 @@ class Solution(models.Model):
 
     def get_solution(self):
         return json.loads(self.solution)
+
+    def set_capacities(self, capacities_dict):
+        self.capacities = json.dumps(capacities_dict)
+
+    def get_capacities(self):
+        return json.loads(self.capacities)
 
     def __str__(self):
         return self.name

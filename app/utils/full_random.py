@@ -3,27 +3,40 @@ import json
 from django.conf import settings
 from tqdm import tqdm
 
-from app.models import Person, Solution, SiteConfig
+from app.models import Person, Solution, SiteConfig, Site
 from app.utils import swap, evaluate
 
 
 def generate_random_room(gender):
     rooms = {}
+    capacities = {}
 
-    for i in range(SiteConfig.objects.get(id="rooms").num):
-        rooms[f"Room {i + 1}"] = []
+    site = Site.objects.get(id=SiteConfig.objects.get(id="site").num)
+    blocks = site.get_site().get("blocks")
 
+    for block in blocks:
+        if block.get("gender") != gender: continue
+
+        i = 1
+        for _ in range(int(block["room_count"])):
+            name = f"{block.get('name')} #{i}"
+            rooms[name] = []
+            capacities[name] = int(block.get("room_capacity"))
+            i += 1
+
+    room_keys = list(rooms.keys())
     i = 0
-    for person in Person.objects.filter(gender=gender):
+
+    for person in Person.objects.filter(gender=gender).order_by("?"):
+        rooms[room_keys[i]].append(person.id)
+
         i += 1
-
-        rooms[f"Room {i}"].append(person.id)
-
-        i %= SiteConfig.objects.get(id="rooms").num
+        i %= len(room_keys)
 
     s = Solution(
         name=f"Random {gender} rooms",
         solution=json.dumps(rooms),
+        capacities=json.dumps(capacities),
         explanation="Random Rooms",
         strategy="Random"
     )

@@ -6,6 +6,13 @@ from django.conf import settings
 from app.models import Person, Request, Solution, SiteConfig
 from app.utils.evaluate import evaluate_solution
 
+"""
+############################
+########## BROKEN ##########
+############################
+
+Needs to be re-implemented respecting room capacities
+"""
 
 def ideal_splits(rooms):
     out = list(rooms)

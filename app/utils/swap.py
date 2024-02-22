@@ -20,7 +20,7 @@ def do_stop(_1, _2):
     print("\n\nWill stop after this iteration\n")
 
 
-def tune_solution(solution, gender, depth, strategy="?"):
+def tune_solution(solution, gender, depth, capacities, strategy="?"):
     global stop
     rooms = []
     inversion = {}
@@ -60,7 +60,7 @@ def tune_solution(solution, gender, depth, strategy="?"):
         print("Shuffling into empty rooms")
         for p in tqdm(shuffled_keys):
             for room in rooms:
-                if sum(x == room for x in inversion.values()) >= SiteConfig.objects.get(id="room_max_capacity").num: continue
+                if sum(x == room for x in inversion.values()) >= capacities[room]: continue
                 old = inversion[p]
                 inversion[p] = room
 
@@ -77,6 +77,7 @@ def tune_solution(solution, gender, depth, strategy="?"):
         base, _desc = evaluate_solution({room: [x for x in inversion.keys() if inversion[x] == room] for room in rooms},
                                         gender)
 
+        print("Testing swaps")
         for a, b in tqdm(itertools.combinations(shuffled_keys, 2), total=math.comb(len(inversion.keys()), 2)):
             if inversion[a] == inversion[b]: continue
 
@@ -120,6 +121,7 @@ def tune_solution(solution, gender, depth, strategy="?"):
 def tune_solution_by_id(id, depth):
     s = Solution.objects.get(id=id)
     soln = s.get_solution()
+    caps = s.get_capacities()
     gender = "female" if "female" in s.name.lower() else "male"
 
-    return tune_solution(soln, gender, depth, s.strategy)
+    return tune_solution(soln, gender, depth, caps, s.strategy)

@@ -6,7 +6,7 @@ from django.conf import settings
 from django.utils import timezone
 from tqdm import tqdm
 
-from app.models import Person, Request, Solution, SiteConfig
+from app.models import Person, Request, Solution, SiteConfig, Site
 from app.utils.evaluate import evaluate_solution
 from app.utils.hash import hash_solution
 
@@ -41,22 +41,26 @@ def helper(eligible, current_room_ids):
 def generate_solution(gender):
     out = {}
     placed = []
-    next_room = 1
+    capacities = {}
 
     people = list(Person.objects.filter(gender=gender))
     random.shuffle(people)
 
-    per_room = len(people) // SiteConfig.objects.get(id="rooms").num
+    site = Site.objects.get(id=SiteConfig.objects.get(id="site").num)
+    blocks = site.get_site().get("blocks")
 
-    seeds = people[:SiteConfig.objects.get(id="rooms").num]
+    for block in blocks:
+        if block.get("gender") != gender: continue
 
-    for seed in seeds:
-        out[f"Room {next_room}"] = [seed.id]
-        placed.append(seed)
-        next_room += 1
+        i = 1
+        for _ in range(int(block["room_count"])):
+            name = f"{block.get('name')} #{i}"
+            out[name] = []
+            capacities[name] = int(block.get("room_capacity"))
+            i += 1
 
     for room in out.keys():
-        for _ in range(per_room):
+        for _ in range(capacities[room]):
             if len(placed) == len(people): break
 
             eligible = [i for i in people if i not in placed]
@@ -67,7 +71,7 @@ def generate_solution(gender):
 
     score, explanation = evaluate_solution(out, gender)
 
-    return score, explanation, out
+    return score, explanation, out, capacities
 
 
 def generate_solutions(n):
@@ -100,6 +104,7 @@ def generate_solutions(n):
             s = Solution(
                 name=f"{gender} rooms generated {timezone.now().strftime('%Y-%m-%d %H:%M')} (#{i})",
                 solution=json.dumps(x[2]),
+                capacities=json.dumps(x[3]),
                 explanation=x[1],
                 strategy="Greedy Room"
             )
