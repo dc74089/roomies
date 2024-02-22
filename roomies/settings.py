@@ -42,6 +42,7 @@ else:
 ALLOWED_HOSTS = [
     'roomies.canora.us',
     'eme6209.canora.us',
+    'savannah.canora.us',
 ]
 
 if DEBUG:
