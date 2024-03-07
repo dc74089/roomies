@@ -149,7 +149,10 @@ def view_edit_solution(request, id):
         out[room] = []
 
         for person_id in soln[room]:
-            out[room].append((Person.objects.get(id=person_id), helper_reqs_granted_in_soln(person_id, soln[room])))
+            try:
+                out[room].append((Person.objects.get(id=person_id), helper_reqs_granted_in_soln(person_id, soln[room])))
+            except:
+                out[room].append((person_id, None))
 
     return render(request, "app/admin_solution_edit.html", {
         "solution": solution,
