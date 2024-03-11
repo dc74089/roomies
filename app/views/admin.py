@@ -1,5 +1,6 @@
 import codecs
 import csv
+import traceback
 
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseBadRequest, HttpResponse, JsonResponse
@@ -133,6 +134,8 @@ def helper_reqs_granted_in_soln(p_id, room):
 
     for req in p.requests.all():
         if req.requestee_id in room:
+            print(req)
+            print("MATCH")
             x += 1
 
     return x
@@ -149,9 +152,11 @@ def view_edit_solution(request, id):
         out[room] = []
 
         for person_id in soln[room]:
+            print(person_id)
             try:
                 out[room].append((Person.objects.get(id=person_id), helper_reqs_granted_in_soln(person_id, soln[room])))
-            except:
+            except Exception as e:
+                traceback.print_exc()
                 out[room].append((person_id, None))
 
     return render(request, "app/admin_solution_edit.html", {
@@ -180,6 +185,10 @@ def move_student_in_solution(request):
             soln[data['to']].append(data['person'])
 
             gender = "female" if "female" in solution.name else "male"
+
+            if "(ALL)" in solution.name:
+                gender = "ALL"
+
             score, explanation = evaluate.evaluate_solution(soln, gender)
             solution.explanation = explanation
 

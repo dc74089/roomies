@@ -13,7 +13,12 @@ def evaluate_solution(soln: dict, gender):
         for id in soln[room]:
             room_inversion[id] = room
 
-    for person in Person.objects.filter(gender=gender):
+    if gender == "ALL":
+        gq = Person.objects.all()
+    else:
+        gq = Person.objects.filter(gender=gender)
+
+    for person in gq:
         num_reqs = person.requests.count()
         num_failures = 0
         num_successes = 0
@@ -41,7 +46,10 @@ def evaluate_solution(soln: dict, gender):
             complete_failures.append(person.name)
             running += 1000
 
-        running += (num_failures / num_reqs)
+        try:
+            running += (num_failures / num_reqs)
+        except ZeroDivisionError:
+            pass
 
         if f"{num_successes} granted requests" not in stats:
             stats[f"{num_successes} granted requests"] = 0
