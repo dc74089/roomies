@@ -129,16 +129,18 @@ def edit_site(request):
 
 
 def helper_reqs_granted_in_soln(p_id, room):
-    x = 0
+    x = y = 0
     p = Person.objects.get(id=p_id)
 
-    for req in p.requests.all():
+    for req in Request.objects.filter(requestor__id=p_id):
         if req.requestee_id in room:
-            print(req)
-            print("MATCH")
             x += 1
 
-    return x
+    for req in Request.objects.filter(requestee__id=p_id):
+        if req.requestor_id in room:
+            y += 1
+
+    return x, y
 
 
 @login_required
@@ -198,7 +200,8 @@ def move_student_in_solution(request):
             counts = {}
             for room in soln:
                 for stu in soln[room]:
-                    counts[stu] = helper_reqs_granted_in_soln(stu, soln[room])
+                    tmp = helper_reqs_granted_in_soln(stu, soln[room])
+                    counts[stu] = f"{tmp[0]}|{tmp[1]}"
 
             return JsonResponse({
                 "explanation": explanation.replace("\n", "<br>"),
