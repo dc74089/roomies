@@ -143,6 +143,16 @@ def helper_reqs_granted_in_soln(p_id, room):
     return x, y
 
 
+def helper_room_sorter(inp):
+    print(inp)
+    if isinstance(inp[0], Person):
+        return inp[0].name.split()[-1]
+    elif isinstance(inp[0], str):
+        return inp[0].split()[-1]
+    else:
+        return inp
+
+
 @login_required
 def view_edit_solution(request, id):
     solution = Solution.objects.get(id=id)
@@ -154,12 +164,13 @@ def view_edit_solution(request, id):
         out[room] = []
 
         for person_id in soln[room]:
-            print(person_id)
             try:
                 out[room].append((Person.objects.get(id=person_id), helper_reqs_granted_in_soln(person_id, soln[room])))
             except Exception as e:
                 traceback.print_exc()
                 out[room].append((person_id, None))
+
+        out[room] = sorted(out[room], key=helper_room_sorter)
 
     return render(request, "app/admin_solution_edit.html", {
         "solution": solution,
@@ -170,7 +181,7 @@ def view_edit_solution(request, id):
 @login_required
 @csrf_exempt
 def move_student_in_solution(request):
-    print(dict(request.POST))
+    # print(dict(request.POST))
     if request.user.is_authenticated and request.method == "POST":
         data = request.POST
 
