@@ -35,7 +35,13 @@ def student_home(request):
             reqs = p.requests.all().exclude(manual=True)
             all_requestees = [r.requestee.id for r in reqs]
 
-            eligible_others = Person.objects.filter(gender=p.gender).exclude(id=p.id).exclude(id__in=all_requestees)
+            eligible_others = (
+                Person.objects
+                .filter(gender=p.gender)
+                .exclude(id=p.id)
+                .exclude(id__in=all_requestees)
+                .order_by('name')
+            )
 
             return render(request, "app/student_home.html", {
                 "person": p,
