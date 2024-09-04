@@ -1,6 +1,7 @@
 import json
 import math
 import random
+import traceback
 
 from django.conf import settings
 from django.utils import timezone
@@ -75,43 +76,47 @@ def generate_solution(gender):
 
 
 def generate_solutions(n):
-    out = []
-    fill_db()
+    try:
+        out = []
+        fill_db()
 
-    for gender in ("Male", "Female"):
-        solutions = []
-        hashes = []
-        best_score = 2 ** 30
+        for gender in ("Male", "Female"):
+            solutions = []
+            hashes = []
+            best_score = 2 ** 30
 
-        for _ in tqdm(range(n)):
-            soln = (generate_solution(gender.lower()))
+            for _ in tqdm(range(n)):
+                soln = (generate_solution(gender.lower()))
 
-            if soln[0] < best_score:
-                best_score = soln[0]
-                solutions = []
-                hashes = []
-                print(f"\nNew best score: {soln[0]}")
+                if soln[0] < best_score:
+                    best_score = soln[0]
+                    solutions = []
+                    hashes = []
+                    print(f"\nNew best score: {soln[0]}")
 
-            if soln[0] == best_score and hash_solution(soln[2]) not in hashes:
-                solutions.append(soln)
-                hashes.append(hash_solution(soln[2]))
-                print(f"\nSaving solution with {soln[0]}")
+                if soln[0] == best_score and hash_solution(soln[2]) not in hashes:
+                    solutions.append(soln)
+                    hashes.append(hash_solution(soln[2]))
+                    print(f"\nSaving solution with {soln[0]}")
 
-        print(f"Found {len(solutions)} equivalent solutions with score {solutions[0][0]}")
+            print(f"Found {len(solutions)} equivalent solutions with score {solutions[0][0]}")
 
-        i = 1
-        for x in solutions:
-            s = Solution(
-                name=f"{gender} rooms generated {timezone.now().strftime('%Y-%m-%d %H:%M')} (#{i})",
-                solution=json.dumps(x[2]),
-                capacities=json.dumps(x[3]),
-                explanation=x[1],
-                strategy="Greedy Room"
-            )
+            i = 1
+            for x in solutions:
+                s = Solution(
+                    name=f"{gender} rooms generated {timezone.now().strftime('%Y-%m-%d %H:%M')} (#{i})",
+                    solution=json.dumps(x[2]),
+                    capacities=json.dumps(x[3]),
+                    explanation=x[1],
+                    strategy="Greedy Room"
+                )
 
-            s.save()
-            i += 1
+                s.save()
+                i += 1
 
-            out.append(s.id)
+                out.append(s.id)
 
-    return out
+        return out
+    except:
+        print("GREEDY ERROR")
+        print(traceback.format_exc())

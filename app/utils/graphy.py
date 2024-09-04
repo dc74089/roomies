@@ -1,3 +1,4 @@
+import traceback
 from pprint import pprint
 
 import networkx as nx
@@ -139,9 +140,13 @@ def generate_solution(gender='female'):
 
 
 def generate_solutions():
-    out = []
+    try:
+        out = []
 
-    out.extend(generate_solution("male"))
-    out.extend(generate_solution("female"))
+        out.extend(generate_solution("male"))
+        out.extend(generate_solution("female"))
 
-    return out
+        return out
+    except:
+        print("GRAPHY ERROR")
+        print(traceback.format_exc())

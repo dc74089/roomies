@@ -3,6 +3,7 @@ import json
 import math
 import random
 import signal
+import traceback
 
 from django.conf import settings
 from django.utils import timezone
@@ -119,9 +120,13 @@ def tune_solution(solution, gender, depth, capacities, strategy="?"):
 
 
 def tune_solution_by_id(id, depth):
-    s = Solution.objects.get(id=id)
-    soln = s.get_solution()
-    caps = s.get_capacities()
-    gender = "female" if "female" in s.name.lower() else "male"
+    try:
+        s = Solution.objects.get(id=id)
+        soln = s.get_solution()
+        caps = s.get_capacities()
+        gender = "female" if "female" in s.name.lower() else "male"
 
-    return tune_solution(soln, gender, depth, caps, s.strategy)
+        return tune_solution(soln, gender, depth, caps, s.strategy)
+    except:
+        print("SWAP ERROR")
+        print(traceback.format_exc())
