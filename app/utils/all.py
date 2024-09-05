@@ -17,7 +17,7 @@ def do_all():
 def run_in_parallel():
     tune_future_list = []
 
-    with concurrent.futures.ThreadPoolExecutor(max_workers=6) as executor:
+    with concurrent.futures.ProcessPoolExecutor(max_workers=6) as executor:
         futures = [
             executor.submit(graphy.generate_solutions),
             executor.submit(greedyroom.generate_and_save, 10000, "Male"),
