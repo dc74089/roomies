@@ -75,46 +75,59 @@ def generate_solution(gender):
     return score, explanation, out, capacities
 
 
-def generate_solutions(n):
+def generate_and_save(n, gender):
     try:
         out = []
         fill_db()
 
+        solutions = []
+        hashes = []
+        best_score = 2 ** 30
+
+        for _ in tqdm(range(n)):
+            soln = (generate_solution(gender.lower()))
+
+            if soln[0] < best_score:
+                best_score = soln[0]
+                solutions = []
+                hashes = []
+                print(f"\nNew best score: {soln[0]}")
+
+            if soln[0] == best_score and hash_solution(soln[2]) not in hashes:
+                solutions.append(soln)
+                hashes.append(hash_solution(soln[2]))
+                print(f"\nSaving solution with {soln[0]}")
+
+        print(f"Found {len(solutions)} equivalent solutions with score {solutions[0][0]}")
+
+        i = 1
+        for x in solutions:
+            s = Solution(
+                name=f"{gender} rooms generated {timezone.now().strftime('%Y-%m-%d %H:%M')} (#{i})",
+                solution=json.dumps(x[2]),
+                capacities=json.dumps(x[3]),
+                explanation=x[1],
+                strategy="Greedy Room"
+            )
+
+            s.save()
+            i += 1
+
+            out.append(s.id)
+
+        return out
+    except:
+        print("GREEDY ERROR")
+        print(traceback.format_exc())
+
+
+
+def generate_solutions(n):
+    try:
+        out = []
+
         for gender in ("Male", "Female"):
-            solutions = []
-            hashes = []
-            best_score = 2 ** 30
-
-            for _ in tqdm(range(n)):
-                soln = (generate_solution(gender.lower()))
-
-                if soln[0] < best_score:
-                    best_score = soln[0]
-                    solutions = []
-                    hashes = []
-                    print(f"\nNew best score: {soln[0]}")
-
-                if soln[0] == best_score and hash_solution(soln[2]) not in hashes:
-                    solutions.append(soln)
-                    hashes.append(hash_solution(soln[2]))
-                    print(f"\nSaving solution with {soln[0]}")
-
-            print(f"Found {len(solutions)} equivalent solutions with score {solutions[0][0]}")
-
-            i = 1
-            for x in solutions:
-                s = Solution(
-                    name=f"{gender} rooms generated {timezone.now().strftime('%Y-%m-%d %H:%M')} (#{i})",
-                    solution=json.dumps(x[2]),
-                    capacities=json.dumps(x[3]),
-                    explanation=x[1],
-                    strategy="Greedy Room"
-                )
-
-                s.save()
-                i += 1
-
-                out.append(s.id)
+            out.extend(generate_and_save(n, gender))
 
         return out
     except:

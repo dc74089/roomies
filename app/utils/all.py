@@ -20,8 +20,10 @@ def run_in_parallel():
     with concurrent.futures.ThreadPoolExecutor(max_workers=6) as executor:
         futures = [
             executor.submit(graphy.generate_solutions),
-            executor.submit(greedyroom.generate_solutions, 10000),
-            executor.submit(sum.generate_solutions, 10000),
+            executor.submit(greedyroom.generate_and_save, 10000, "Male"),
+            executor.submit(greedyroom.generate_and_save, 10000, "Female"),
+            executor.submit(sum.generate_and_save, 10000, "Male"),
+            executor.submit(sum.generate_and_save, 10000, "Female"),
         ]
 
         for future in concurrent.futures.as_completed(futures):
