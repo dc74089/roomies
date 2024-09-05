@@ -1,5 +1,8 @@
 import concurrent.futures
 
+import django
+from django.db import connection
+
 from app.models import Solution
 from app.utils import graphy, greedyroom, sum, swap
 
@@ -36,10 +39,10 @@ def tune_in_parallel():
     solns = list(Solution.objects.filter(tuned=False))
 
     def helper(soln_id, n):
-        from django.db import close_old_connections
-        close_old_connections()
+        django.setup()
 
         swap.tune_solution_by_id(soln_id, n)
+
 
     with concurrent.futures.ProcessPoolExecutor(max_workers=6) as executor:
         futures = []
