@@ -1,5 +1,6 @@
 import concurrent.futures
 
+from app.models import Solution
 from app.utils import graphy, greedyroom, sum, swap
 
 
@@ -15,8 +16,6 @@ def do_all():
 
 
 def run_in_parallel():
-    tune_future_list = []
-
     with concurrent.futures.ProcessPoolExecutor(max_workers=6) as executor:
         futures = [
             executor.submit(graphy.generate_solutions),
@@ -26,16 +25,22 @@ def run_in_parallel():
             executor.submit(sum.generate_and_save, 10000, "Female"),
         ]
 
-        for future in concurrent.futures.as_completed(futures):
-            results = future.result()
+        executor.shutdown(wait=True)
 
-            for result in results:
-                tune_future_list.append(
-                    executor.submit(swap.tune_solution_by_id, result, 10)
-                )
+        tune_futures = tune_in_parallel()
 
-        final_results = []
-        for future in concurrent.futures.as_completed(tune_future_list):
-            final_results.append(future.result())
+    return futures, tune_futures
 
-    return final_results
+
+def tune_in_parallel():
+    solns = list(Solution.objects.filter(tuned=False))
+
+    with concurrent.futures.ProcessPoolExecutor(max_workers=6) as executor:
+        futures = []
+
+        for soln in solns:
+            futures.append(executor.submit(swap.tune_solution_by_id, soln, 10))
+
+        executor.shutdown(wait=True)
+
+        return futures

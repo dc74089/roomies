@@ -126,7 +126,11 @@ def tune_solution_by_id(id, depth):
         caps = s.get_capacities()
         gender = "female" if "female" in s.name.lower() else "male"
 
-        return tune_solution(soln, gender, depth, caps, s.strategy)
+        x = tune_solution(soln, gender, depth, caps, s.strategy)
+
+        s.tuned = True
+
+        return x
     except:
         print("SWAP ERROR")
         print(traceback.format_exc())
