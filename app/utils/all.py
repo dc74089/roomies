@@ -35,11 +35,17 @@ def run_in_parallel():
 def tune_in_parallel():
     solns = list(Solution.objects.filter(tuned=False))
 
+    def helper(soln_id, n):
+        from django.db import close_old_connections
+        close_old_connections()
+
+        swap.tune_solution_by_id(soln_id, n)
+
     with concurrent.futures.ProcessPoolExecutor(max_workers=6) as executor:
         futures = []
 
         for soln in solns:
-            futures.append(executor.submit(swap.tune_solution_by_id, soln.id, 10))
+            futures.append(executor.submit(helper, soln.id, 10))
 
         executor.shutdown(wait=True)
 
