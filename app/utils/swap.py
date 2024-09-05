@@ -129,6 +129,7 @@ def tune_solution_by_id(id, depth):
         x = tune_solution(soln, gender, depth, caps, s.strategy)
 
         s.tuned = True
+        s.save()
 
         return x
     except:
