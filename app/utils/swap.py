@@ -108,11 +108,14 @@ def tune_solution(solution, gender, depth, capacities, strategy="?"):
     s = Solution(
         name=f"Tuned {gender} rooms generated {timezone.now().strftime('%Y-%m-%d %H:%M')}",
         solution=json.dumps(final),
+        tuned=True,
         explanation=f"Score went from {original_score} to {final_score}. \n\n"
                     f"Orig: {original_desc} \n\n"
                     f"New: {final_desc}",
         strategy=f"Tuned {strategy}"
     )
+
+    s.set_capacities(capacities)
 
     s.save()
 
