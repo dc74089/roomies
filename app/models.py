@@ -118,5 +118,10 @@ class Solution(models.Model):
     def get_capacities(self):
         return json.loads(self.capacities)
 
+    def get_score(self):
+        from app.utils.evaluate import evaluate_solution
+
+        return evaluate_solution(self.get_solution(), "female" if "female" in self.name.lower() else "male")[0]
+
     def __str__(self):
         return self.name
