@@ -4,7 +4,7 @@ import django
 from django.db import connection
 
 from app.models import Solution
-from app.utils import graphy, greedyroom, sum, swap
+from app.utils import graphy, greedyroom, sum, swap, greedysmart
 
 
 def do_all():
@@ -12,6 +12,7 @@ def do_all():
 
     solns.extend(graphy.generate_solutions())
     solns.extend(greedyroom.generate_solutions(10000))
+    solns.extend(greedysmart.generate_solutions(10000))
     solns.extend(sum.generate_solutions(10000))
 
     for sid in solns:
@@ -24,13 +25,15 @@ def run_in_parallel():
             executor.submit(graphy.generate_solutions),
             executor.submit(greedyroom.generate_and_save, 10000, "Male"),
             executor.submit(greedyroom.generate_and_save, 10000, "Female"),
+            executor.submit(greedysmart.generate_and_save, 10000, "Male"),
+            executor.submit(greedysmart.generate_and_save, 10000, "Female"),
             executor.submit(sum.generate_and_save, 10000, "Male"),
             executor.submit(sum.generate_and_save, 10000, "Female"),
         ]
 
         executor.shutdown(wait=True)
 
-        tune_futures = tune_in_parallel()
+    tune_futures = tune_in_parallel()
 
     return futures, tune_futures
 
@@ -49,6 +52,6 @@ def tune_in_parallel():
         for soln in solns:
             futures.append(executor.submit(tune_helper, soln.id, 10))
 
-        executor.shutdown(wait=True)
+    executor.shutdown(wait=True)
 
-        return futures
+    return futures
