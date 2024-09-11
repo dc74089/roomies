@@ -26,6 +26,8 @@
 
   <script>
       let stu;
+      let rename_old_i;
+      let rename_old_name;
 
       $(function () {
           $(".movehere").hide();
@@ -52,7 +54,7 @@
               "person": stu,
               "to": room_id
           }).then(function (data) {
-              let dest = "#table-" + table_id.replace(/ /g,'').replace(/#/g,'')
+              let dest = "#table-" + table_id.replace(/ /g, '').replace(/#/g, '')
 
               $("#person-" + stu).detach().appendTo(dest)
               $("#explanation").html(data['explanation'])
@@ -87,6 +89,17 @@
                   })
               })
       }
+
+      function rename(i, old_name) {
+          rename_old_i = i;
+          rename_old_name = old_name;
+
+          $("#rename-modal-title").html("Rename " + rename_old_name);
+          $("#old-room-name").val(rename_old_name);
+
+          $("#rename-modal").modal()
+
+      }
   </script>
 {% endblock %}
 
@@ -108,7 +121,8 @@
       <div class="col-12 col-md-6 col-lg-4 print-halfpage">
         <div class="card mb-3">
           <div class="card-body">
-            <h2 class="card-title">{{ room }}</h2>
+            <h2 class="card-title room-name mb-0" id="room-title-{{ forloop.counter0 }}">{{ room }}</h2>
+            <p><a href="#" onclick="rename({{ forloop.counter0 }}, '{{ room }}')">Rename</a></p>
             <table class="table table-striped table-hover" id="table-{{ room|cut:' '|cut:'#' }}">
               <tbody>
               {% for person, count in people %}
@@ -141,6 +155,7 @@
     {% endfor %}
   </div>
 
+  <!-- Student Details Modal -->
   <div class="modal" tabindex="-1" role="dialog" id="modal">
     <div class="modal-dialog" role="document">
       <div class="modal-content">
@@ -155,6 +170,32 @@
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Rename Room Modal -->
+  <div class="modal" tabindex="-1" role="dialog" id="rename-modal">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <form action="{% url 'admin_rename_room' %}" method="post">
+          <div class="modal-header">
+            <h5 class="modal-title" id="rename-modal-title">Modal title</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body" id="rename-modal-body">
+            {% csrf_token %}
+            <input class="d-none" name="solution" value="{{ solution.id }}">
+            <input class="d-none" name="old" id="old-room-name">
+            <input class="form-control" name="new">
+          </div>
+          <div class="modal-footer">
+            <button type="submit" class="btn btn-success">Submit</button>
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+          </div>
+        </form>
       </div>
     </div>
   </div>

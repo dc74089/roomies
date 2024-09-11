@@ -160,7 +160,7 @@ def view_edit_solution(request, id):
 
     out = {}
 
-    for room in soln:
+    for room in sorted(soln.keys()):
         out[room] = []
 
         for person_id in soln[room]:
@@ -220,6 +220,23 @@ def move_student_in_solution(request):
             })
 
     return HttpResponseBadRequest()
+
+
+def rename_room_in_solution(request):
+    if request.user.is_authenticated and request.method == "POST":
+        data = request.POST
+
+        if 'solution' in data and 'old' in data and 'new' in data:
+            solution = Solution.objects.get(id=data['solution'])
+            soln = solution.get_solution()
+
+            soln[data['new']] = list(soln[data['old']])
+            del soln[data['old']]
+
+            solution.set_solution(soln)
+            solution.save()
+
+            return redirect('admin_edit_solution', id=solution.id)
 
 
 @login_required
