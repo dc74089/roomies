@@ -106,16 +106,16 @@ class Solution(models.Model):
     strategy = models.TextField(null=True, blank=True)
     tuned = models.BooleanField(default=False)
 
-    def set_solution(self, soln_dict):
+    def set_solution(self, soln_dict: dict):
         self.solution = json.dumps(soln_dict)
 
-    def get_solution(self):
+    def get_solution(self) -> dict:
         return json.loads(self.solution)
 
-    def set_capacities(self, capacities_dict):
+    def set_capacities(self, capacities_dict: dict):
         self.capacities = json.dumps(capacities_dict)
 
-    def get_capacities(self):
+    def get_capacities(self) -> dict:
         return json.loads(self.capacities)
 
     def get_score(self):
