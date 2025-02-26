@@ -11,15 +11,19 @@ def student_home(request):
 
     if request.method == "POST":
         if 'sid' in request.POST and 'password' in request.POST:
-            data = request.POST
-            sid = Person.unhash_id(data['sid'])
+            if request.POST['sid'] and request.POST['password']:
+                data = request.POST
+                sid = Person.unhash_id(data['sid'])
 
-            if sid == data['password']:
-                request.session.clear()
-                request.session['sid'] = sid
-                request.session.save()
+                if sid == data['password']:
+                    request.session.clear()
+                    request.session['sid'] = sid
+                    request.session.save()
 
-                return redirect('student_home')
+                    return redirect('student_home')
+                else:
+                    request.session['login_error'] = True
+                    return redirect('index')
             else:
                 request.session['login_error'] = True
                 return redirect('index')
