@@ -20,4 +20,5 @@ from django.urls import path, include
 urlpatterns = [
     path('db/', admin.site.urls),
     path('', include('app.urls')),
+    path('', include('roomview.urls')),
 ]

@@ -1,0 +1,33 @@
+{% extends 'app/base.html' %}
+
+{% block script %}
+  <style>
+      td, p, h1 {
+          text-align: center;
+      }
+  </style>
+{% endblock %}
+
+{% block content %}
+  <div class="row">
+    <div class="col-sm-12 col-lg-8 offset-lg-2">
+      <div class="card">
+        <div class="card-body">
+          <h1>{{ room.name }}</h1>
+
+          <table class="table table-striped">
+            {% for person in room.person_set.all %}
+              <tr>
+                <td><h5>{{ person.name }}</h5></td>
+              </tr>
+            {% endfor %}
+          </table>
+
+          <p style="margin-top: 10px;">
+            <a class="btn btn-primary text-white" href="{% url 'all_rooms' %}">Click here to view all rooms</a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

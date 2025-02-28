@@ -1,0 +1,41 @@
+{% extends 'app/base.html' %}
+
+{% block script %}
+  <script>
+      let ndef;
+
+      $(document).ready(function () {
+          ndef = new NDEFReader();
+      })
+
+      async function write(slug) {  //TODO: Check async stuff
+          try {
+              await ndef.write({
+                  records: [{
+                      recordType: "url",
+                      data: "https://roomies.canora.us/r/" + slug
+                  }]
+              });
+
+              alert("Success")
+          } catch {
+              alert("Write Failed")
+          }
+      }
+  </script>
+{% endblock %}
+
+{% block content %}
+  <div class="row">
+    <div class="col-12">
+      <table class="table table-striped table-hover">
+        {% for room in rooms %}
+          <tr>
+            <td>{{ room.name }}</td>
+            <td><a class="btn btn-primary" href="" onclick="write({{ room.id }})">Write Tag</a></td>
+          </tr>
+        {% endfor %}
+      </table>
+    </div>
+  </div>
+{% endblock %}
