@@ -19,17 +19,32 @@ def do_all():
         swap.tune_solution_by_id(sid, 10)
 
 
-def run_in_parallel():
+def run_in_parallel(gender=None):
     with concurrent.futures.ProcessPoolExecutor(max_workers=6) as executor:
-        futures = [
-            executor.submit(graphy.generate_solutions),
-            executor.submit(greedyroom.generate_and_save, 10000, "Male"),
-            executor.submit(greedyroom.generate_and_save, 10000, "Female"),
-            executor.submit(greedysmart.generate_and_save, 10000, "Male"),
-            executor.submit(greedysmart.generate_and_save, 10000, "Female"),
-            executor.submit(sum.generate_and_save, 10000, "Male"),
-            executor.submit(sum.generate_and_save, 10000, "Female"),
-        ]
+        if gender == "male":
+            futures = [
+                executor.submit(graphy.generate_solutions),
+                executor.submit(greedyroom.generate_and_save, 10000, "Male"),
+                executor.submit(greedysmart.generate_and_save, 10000, "Male"),
+                executor.submit(sum.generate_and_save, 10000, "Male"),
+            ]
+        elif gender == "female":
+            futures = [
+                executor.submit(graphy.generate_solutions),
+                executor.submit(greedyroom.generate_and_save, 10000, "Female"),
+                executor.submit(greedysmart.generate_and_save, 10000, "Female"),
+                executor.submit(sum.generate_and_save, 10000, "Female"),
+            ]
+        else:
+            futures = [
+                executor.submit(graphy.generate_solutions),
+                executor.submit(greedyroom.generate_and_save, 10000, "Male"),
+                executor.submit(greedyroom.generate_and_save, 10000, "Female"),
+                executor.submit(greedysmart.generate_and_save, 10000, "Male"),
+                executor.submit(greedysmart.generate_and_save, 10000, "Female"),
+                executor.submit(sum.generate_and_save, 10000, "Male"),
+                executor.submit(sum.generate_and_save, 10000, "Female"),
+            ]
 
         executor.shutdown(wait=True)
 
@@ -37,9 +52,11 @@ def run_in_parallel():
 
     return futures, tune_futures
 
+
 def tune_helper(soln_id, n):
     django.setup()
     swap.tune_solution_by_id(soln_id, n)
+
 
 def tune_in_parallel():
     solns = list(Solution.objects.filter(tuned=False))
