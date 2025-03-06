@@ -1,5 +1,6 @@
 from django.http import HttpResponseForbidden
 from django.shortcuts import render
+from django.urls import reverse
 
 from roomview.models import Room
 
@@ -38,6 +39,9 @@ def all_rooms(request):
 
 def admin(request):
     if request.user.is_authenticated and request.user.is_staff:
-        return render(request, "roomview/admin.html", {"rooms": Room.objects.all()})
+        return render(request, "roomview/admin.html", {
+            "rooms": Room.objects.all(),
+            "auth_url": request.build_absolute_uri(reverse('activate') + "?key=" + key),
+        })
     else:
         return HttpResponseForbidden()

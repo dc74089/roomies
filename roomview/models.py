@@ -1,6 +1,8 @@
 import string
 
 from django.db import models
+from django.urls import reverse
+
 
 # Create your models here.
 class Person(models.Model):
@@ -23,6 +25,9 @@ def generate_slug():
 class Room(models.Model):
     key = models.CharField(unique=True, max_length=100, primary_key=True, default=generate_slug)
     name = models.TextField()
+
+    def url(self):
+        return "https://roomies.canora.us" + reverse('room', kwargs={"room_key":self.key})
 
     class Meta:
         ordering = ("name",)

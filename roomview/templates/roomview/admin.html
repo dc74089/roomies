@@ -1,4 +1,5 @@
 {% extends 'app/base.html' %}
+{% load qr_code %}
 
 {% block script %}
   <script>
@@ -28,14 +29,28 @@
 {% block content %}
   <div class="row">
     <div class="col-12">
+      <div class="text-center mb-4">
+        <button class="btn btn-primary text-white" popovertarget="qr-auth">Auth QR</button>
+      </div>
       <table class="table table-striped table-hover">
         {% for room in rooms %}
           <tr>
             <td>{{ room.name }}</td>
-            <td><a class="btn btn-primary" href="" onclick="write({{ room.id }})">Write Tag</a></td>
+            <td><a class="btn btn-primary text-white" onclick="write({{ room.id }})">Write Tag</a></td>
+            <td>
+              <button class="btn btn-primary text-white" popovertarget="qr-{{ room.key }}">Show QR</button>
+            </td>
           </tr>
         {% endfor %}
       </table>
     </div>
   </div>
+
+  <div id="qr-auth" popover>{% qr_from_text auth_url image_format='png' %}</div>
+
+  {% for room in rooms %}
+    <div id="qr-{{ room.key }}" popover>
+      {% qr_from_text room.url image_format='png' %}
+    </div>
+  {% endfor %}
 {% endblock %}
