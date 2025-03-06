@@ -36,7 +36,7 @@
         {% for room in rooms %}
           <tr>
             <td>{{ room.name }}</td>
-            <td><a class="btn btn-primary text-white" onclick="write({{ room.id }})">Write Tag</a></td>
+            <td><button class="btn btn-primary text-white" onclick="write({{ room.id }})">Write Tag</button></td>
             <td>
               <button class="btn btn-primary text-white" popovertarget="qr-{{ room.key }}">Show QR</button>
             </td>
