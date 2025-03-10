@@ -5,23 +5,22 @@
   <script>
       let ndef;
 
-      $(document).ready(function () {
-          ndef = new NDEFReader();
-      })
-
-      async function write(slug) {  //TODO: Check async stuff
-          try {
-              await ndef.write({
+      async function write_tag(slug) {  //TODO: Check async stuff
+          let ndef = new NDEFReader();
+          ndef
+              .write({
                   records: [{
                       recordType: "url",
                       data: "https://roomies.canora.us/r/" + slug
                   }]
+              })
+              .then(() => {
+                  alert("Success")
+              })
+              .catch((err) => {
+                  alert("Fail")
+                  alert(err.stack)
               });
-
-              alert("Success")
-          } catch {
-              alert("Write Failed")
-          }
       }
   </script>
 {% endblock %}
@@ -37,7 +36,9 @@
           <tr>
             <td>{{ room.name }}</td>
             <td><a href="{{ room.url }}">{{ room.url }}</a></td>
-            <td><button class="btn btn-primary text-white" onclick="write({{ room.id }})">Write Tag</button></td>
+            <td>
+              <button class="btn btn-primary text-white" onclick="write_tag('{{ room.key }}')">Write Tag</button>
+            </td>
             <td>
               <button class="btn btn-primary text-white" popovertarget="qr-{{ room.key }}">Show QR</button>
             </td>
