@@ -5,13 +5,31 @@
   <script>
       let ndef;
 
-      async function write_tag(slug) {  //TODO: Check async stuff
+      async function write_tag(slug) {
           let ndef = new NDEFReader();
           ndef
               .write({
                   records: [{
                       recordType: "url",
                       data: "https://roomies.canora.us/r/" + slug
+                  }]
+              })
+              .then(() => {
+                  alert("Success")
+              })
+              .catch((err) => {
+                  alert("Fail")
+                  alert(err.stack)
+              });
+      }
+
+      async function write_auth_tag() {
+          let ndef = new NDEFReader();
+          ndef
+              .write({
+                  records: [{
+                      recordType: "url",
+                      data: "{{ auth_url }}"
                   }]
               })
               .then(() => {
@@ -30,6 +48,7 @@
     <div class="col-12">
       <div class="text-center mb-4">
         <button class="btn btn-primary text-white" popovertarget="qr-auth">Auth QR</button>
+        <button class="btn btn-primary text-white" onclick="write_auth_tag()">Write Auth NDEF</button>
       </div>
       <table class="table table-striped table-hover">
         {% for room in rooms %}
@@ -50,7 +69,7 @@
 
   <div id="qr-auth" popover>
     {% qr_from_text auth_url image_format='png' %}
-    <p><a href="{{ auth_url }}">{{ auth_url }}</a></p>
+    <p class="text-center"><a href="{{ auth_url }}">{{ auth_url }}</a></p>
   </div>
 
   {% for room in rooms %}
