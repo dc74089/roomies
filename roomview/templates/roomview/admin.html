@@ -47,7 +47,10 @@
     </div>
   </div>
 
-  <div id="qr-auth" popover>{% qr_from_text auth_url image_format='png' %}</div>
+  <div id="qr-auth" popover>
+    {% qr_from_text auth_url image_format='png' %}
+    <p><a href="{{ auth_url }}">{{ auth_url }}</a></p>
+  </div>
 
   {% for room in rooms %}
     <div id="qr-{{ room.key }}" popover>
