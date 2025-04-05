@@ -5,6 +5,13 @@
       td, h1 {
           text-align: center;
       }
+
+      .room-anchor {
+          display: block;
+          position: relative;
+          top: -75px;
+          visibility: hidden;
+      }
   </style>
 {% endblock %}
 
@@ -14,7 +21,8 @@
       <div class="col-sm-12 col-lg-6">
         <div class="card mb-4">
           <div class="card-body">
-            <a id="{{ room.key }}"><h1>{{ room.name }}</h1></a>
+            <a class="room-anchor" id="{{ room.key }}"></a>
+            <h1>{{ room.name }}</h1>
 
             <table class="table table-striped">
               {% for person in room.person_set.all %}
