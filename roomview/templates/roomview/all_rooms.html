@@ -14,7 +14,7 @@
       <div class="col-sm-12 col-lg-6">
         <div class="card mb-4">
           <div class="card-body">
-            <h1>{{ room.name }}</h1>
+            <a id="{{ room.key }}"><h1>{{ room.name }}</h1></a>
 
             <table class="table table-striped">
               {% for person in room.person_set.all %}
