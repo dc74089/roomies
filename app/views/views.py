@@ -2,7 +2,7 @@ from django.contrib.auth import authenticate, login as do_login, logout as do_lo
 from django.http import HttpResponseBadRequest
 from django.shortcuts import render, redirect
 
-from app.models import Person, Solution, SiteConfig
+from app.models import Person, Solution, SiteConfig, Site
 
 
 # Create your views here.
@@ -12,9 +12,15 @@ def index(request):
     SiteConfig.init_all()
 
     if request.user.is_authenticated:
+        try:
+            site = Site.objects.get(id=SiteConfig.objects.get(id="site").num)
+        except Site.DoesNotExist:
+            site = None
+
         return render(request, "app/admin.html", {
             "solutions": Solution.objects.all(),
-            "nonresponses": Person.objects.filter(requests__isnull=True).distinct().order_by('name')
+            "nonresponses": Person.objects.filter(requests__isnull=True).distinct().order_by('name'),
+            "site": site,
         })
     else:
         if not SiteConfig.objects.get(id="open_for_students"):

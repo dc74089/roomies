@@ -72,7 +72,11 @@
       <div class="card mb-3">
         <div class="card-body">
           <h2 class="card-title">Step 4: Generate Room List</h2>
-          <p>Currently configured to select <code>{{ rooms.num }}</code> rooms. This can be changed in the DB tab.</p>
+          {% if site %}
+            <p>The currently active site is <b>{{ site.name }}</b></p>
+          {% else %}
+            <p>There is no active site!</p>
+          {% endif %}
           <a href="#" class="btn btn-success" onclick="alert('This needs to be done through the backend right now. Talk to Dominic!')">Generate</a>
         </div>
       </div>
