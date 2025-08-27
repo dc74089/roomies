@@ -18,6 +18,7 @@ urlpatterns = [
     path('admin/deleterequest', admin.admin_delete_request, name="admin_delete_request"),
 
     path('admin/sites/', admin.sites, name="admin_sites"),
+    path('admin/sites/setactive', admin.site_set_active, name="admin_site_set_active"),
     path('admin/sites/edit', admin.edit_site, name="admin_edit_site"),
 
     path('admin/editsolution/<int:id>', admin.view_edit_solution, name="admin_edit_solution"),

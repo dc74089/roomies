@@ -71,9 +71,32 @@ def toggle_student_availability(request):
 
 @login_required
 def sites(request):
-    sites = Site.objects.all()
+    if request.method == "POST":
+        s = Site(
+            name=request.POST['site_name']
+        )
 
-    return render(request, "app/admin_sites.html", {"sites": sites})
+        s.save()
+
+        return redirect('admin_sites')
+    else:
+        sites = Site.objects.all()
+
+        return render(request, "app/admin_sites.html", {"sites": sites})
+
+
+@login_required
+@csrf_exempt
+def site_set_active(request):
+    if request.method == "POST" and 'id' in request.POST:
+        site = Site.objects.get(id=request.POST['id'])
+
+        config = SiteConfig.objects.get(id="site")
+        config.num = site.id
+        config.save()
+
+        return redirect('admin_sites')
+    return HttpResponseBadRequest()
 
 
 @login_required

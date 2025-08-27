@@ -87,6 +87,14 @@ class Site(models.Model):
     def get_site(self):
         return json.loads(self.room_desc)
 
+    def is_active_site(self):
+        try:
+            scq = SiteConfig.objects.get(id="site")
+        except SiteConfig.DoesNotExist:
+            return False
+
+        return scq.num == self.id
+
     def __str__(self):
         return self.name
 

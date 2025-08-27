@@ -33,14 +33,25 @@
           <th>Site Name</th>
           <th>Total Capacity</th>
           <th>Edit</th>
+          <th>Set Active</th>
         </tr>
         </thead>
         <tbody>
         {% for s in sites %}
           <tr>
-          <td>{{ s.name }}</td>
-          <td>{{ s.capacity }}</td>
-          <td><a class="btn btn-secondary" href="{% url 'admin_edit_site' %}?id={{ s.id }}">Edit</a> </td>
+            <td>{{ s.name }}</td>
+            <td>{{ s.capacity }}</td>
+            <td><a class="btn btn-secondary" href="{% url 'admin_edit_site' %}?id={{ s.id }}">Edit</a></td>
+            <td>
+              {% if s.is_active_site %}
+                <h6 class="my-0">Currently Active</h6>
+              {% else %}
+                <form method="post" action="{% url 'admin_site_set_active' %}">
+                  <input class="d-none" name="id" value="{{ s.id }}">
+                  <button class="btn btn-secondary">Set Active</button>
+                </form>
+              {% endif %}
+            </td>
           </tr>
         {% endfor %}
         </tbody>
