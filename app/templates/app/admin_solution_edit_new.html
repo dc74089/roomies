@@ -1,0 +1,125 @@
+{% extends 'app/base.html' %}
+
+{% block script %}
+  <style>
+      .student {
+          font-size: 1rem;
+          margin-bottom: 0.25rem;
+      }
+
+      .students {
+          min-height: 10px;
+      }
+  </style>
+{% endblock %}
+
+{% block delayedscript %}
+  <script src="https://cdn.jsdelivr.net/npm/@shopify/draggable@1.0.0-beta.11/lib/draggable.bundle.js"></script>
+
+  <script>
+      function moveRoom(student_id, room_id) {
+          student_id = student_id.replace('stu-', '');
+          room_id = room_id.replace('students-', '');
+
+          console.log(student_id, room_id);
+
+          $.post("{% url 'admin_move_student' %}", {
+              "solution": "{{ solution.id }}",
+              "person": student_id,
+              "to": room_id
+          }).done(function (data) {
+              console.log(data);
+          });
+      }
+
+      function show_modal(student_id) {
+          student_id = student_id.replace('stu-', '');
+
+          $('#modal-title').html("Loading...")
+          $("#modal-body").html("")
+
+          $("#modal").modal()
+
+          $.get("{% url 'admin_get_stats' %}", {"id": student_id, "solution": {{solution.id}}})
+              .then(function (data) {
+                  $("#modal-title").html(data['name'])
+
+                  $("#modal-body").html("<h2>Requests</h2><table class='table table-striped table-hover' id='modal-table'></table>")
+                      .append("<h2>Requested By</h2><table class='table table-striped table-hover' id='modal-table-2'></table>")
+
+                  data['requests'].forEach(function (item) {
+                      $("#modal-table").append(`<tr><td>${item['name']}</td><td>${item['satisfied']}</td></tr>`)
+                  })
+
+                  data['requested_by'].forEach(function (item) {
+                      $("#modal-table-2").append(`<tr><td>${item['name']}</td><td>${item['satisfied']}</td></tr>`)
+                  })
+              })
+      }
+
+      const sortable = new Draggable.Sortable(document.querySelectorAll('.students'), {
+          draggable: '.student',
+          mirror: {
+              appendTo: 'body',
+              constrainDimensions: true
+          }
+      });
+
+      sortable.on('sortable:stop', (evt) => {
+          if (evt.data.oldContainer.id != evt.data.newContainer.id) {
+              console.log(evt.data);
+              moveRoom(evt.data.dragEvent.data.originalSource.id, evt.data.newContainer.id);
+          } else {
+              // show_modal(evt.data.dragEvent.data.originalSource.id);
+          }
+      });
+  </script>
+{% endblock %}
+
+{% block content-full %}
+  <div class="row canvas mx-4" id="canvas">
+    {% for room in solution.rooms.all %}
+      <div class="col-12 col-md-6 col-lg-4 col-xl-3">
+        <div class="room card mb-4" id="room-{{ room.id }}">
+          <div class="card-body">
+            <div class="room-label">
+              <h6 class="room-name">{{ room.internal_name }}</h6>
+              {% if room.placed_name %}
+                <h4 class="placed-name">{{ room.placed_name }}</h4>
+              {% else %}
+                <h4 class="placed-name">{{ room.internal_name }}</h4>
+              {% endif %}
+            </div>
+
+            <div class="students" id="students-{{ room.id }}">
+              {% for student in room.people.all %}
+                <div class="student badge badge-pill badge-secondary" id="stu-{{ student.id }}" onclick="show_modal('{{ student.id }}')">
+                  {{ student.name }}
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+
+  <!-- Student Details Modal -->
+  <div class="modal" tabindex="-1" role="dialog" id="modal">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="modal-title">Modal title</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body" id="modal-body">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

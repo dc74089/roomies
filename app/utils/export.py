@@ -4,7 +4,7 @@ import json
 from app.models import Request, supported_genders, Person
 
 
-def to_json():
+def requests_to_json():
     obj = {}
 
     for gender, _ in supported_genders:
@@ -20,7 +20,7 @@ def to_json():
     return json.dumps(obj)
 
 
-def to_csv():
+def requests_to_csv():
     with open("fulldata.csv", 'w') as fil:
         header = ["Name", "Gender", "Num Requestors", "Requestors", "Requests"]
 

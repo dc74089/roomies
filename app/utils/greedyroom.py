@@ -1,17 +1,14 @@
-import json
-import math
 import random
 import traceback
 
-from django.conf import settings
 from django.utils import timezone
 from tqdm import tqdm
 
-from app.models import Person, Request, Solution, SiteConfig, Site
-from app.utils.evaluate import evaluate_solution
+from app.models import Person, Request, Solution, SiteConfig, Site, Room
+from app.utils.evaluate import evaluate_solution_dict
 from app.utils.hash import hash_solution
 
-db = None
+db: dict = None
 
 
 def fill_db():
@@ -20,12 +17,30 @@ def fill_db():
     db = {person.id: {p.id: 0 for p in Person.objects.all()} for person in Person.objects.all()}
 
     for req in Request.objects.filter(type="attract"):
-        if Request.objects.filter(requestor=req.requestee, requestee=req.requestor).exists():
+        if Request.objects.filter(requestor=req.requestee, requestee=req.requestor, type="attract").exists():
             db[req.requestor.id][req.requestee.id] += 3
             db[req.requestee.id][req.requestor.id] += 3
         else:
             db[req.requestor.id][req.requestee.id] += 1
             db[req.requestee.id][req.requestor.id] += 1
+
+    for req in Request.objects.filter(type="repel"):
+        if Request.objects.filter(requestor=req.requestee, requestee=req.requestor, type="repel").exists():
+            db[req.requestor.id][req.requestee.id] -= 3
+            db[req.requestee.id][req.requestor.id] -= 3
+        else:
+            db[req.requestor.id][req.requestee.id] -= 1
+            db[req.requestee.id][req.requestor.id] -= 1
+
+    for req in Request.objects.filter(type="forbid"):
+        if Request.objects.filter(requestor=req.requestee, requestee=req.requestor, type="forbid").exists():
+            db[req.requestor.id][req.requestee.id] -= 10000
+            db[req.requestee.id][req.requestor.id] -= 10000
+
+    for req in Request.objects.filter(type="require"):
+        if Request.objects.filter(requestor=req.requestee, requestee=req.requestor, type="require").exists():
+            db[req.requestor.id][req.requestee.id] += 100
+            db[req.requestee.id][req.requestor.id] += 100
 
 
 def helper(eligible, current_room_ids):
@@ -70,7 +85,7 @@ def generate_solution(gender):
             placed.append(mvp)
             out[room].append(mvp.id)
 
-    score, explanation = evaluate_solution(out, gender)
+    score, explanation = evaluate_solution_dict(out, gender)
 
     return score, explanation, out, capacities
 
@@ -102,15 +117,32 @@ def generate_and_save(n, gender):
 
         i = 1
         for x in solutions:
+            score, explanation, solution_dict, capacities = x
             s = Solution(
                 name=f"{gender} rooms generated {timezone.now().strftime('%Y-%m-%d %H:%M')} (#{i})",
-                solution=json.dumps(x[2]),
-                capacities=json.dumps(x[3]),
-                explanation=x[1],
+                gender=gender,
+                site=Site.objects.get(id=SiteConfig.objects.get(id="site").num),
+                explanation=explanation,
                 strategy="Greedy Room"
             )
 
             s.save()
+            s.refresh_from_db()
+
+            for room, ids in solution_dict.values():
+                r = Room(
+                    internal_name=room,
+                    solution=s,
+                    capacity=capacities[room],
+                )
+
+                r.save()
+
+                for id in ids:
+                    r.people.add(Person.objects.get(id=id))
+
+                r.save()
+
             i += 1
 
             out.append(s.id)

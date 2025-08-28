@@ -2,10 +2,9 @@ import traceback
 from pprint import pprint
 
 import networkx as nx
-from django.conf import settings
 
 from app.models import Person, Request, Solution, SiteConfig
-from app.utils.evaluate import evaluate_solution
+from app.utils.evaluate import evaluate_solution_dict
 
 """
 ############################
@@ -88,7 +87,7 @@ def split_by_id(soln_id):
 
     out = {key: [x.id for x in val] for key, val in out.items()}
 
-    score = evaluate_solution(out, gender)
+    score = evaluate_solution_dict(out, gender)
 
     split_soln = Solution(
         name=f"Graphy Even-Split {gender} Rooms",
@@ -113,7 +112,7 @@ def generate_solution(gender='female'):
     y = list(x)
 
     soln2 = {f"Room {n}": [s.id for s in stus] for n, stus in zip(range(1, 1 + len(y[1])), y[1])}
-    soln2_score = evaluate_solution(soln2, gender)
+    soln2_score = evaluate_solution_dict(soln2, gender)
 
     s2 = Solution(
         name=f"Graphy {gender} Rooms",
@@ -125,7 +124,7 @@ def generate_solution(gender='female'):
     s2.save()
 
     z = ideal_splits(y[1])
-    z_score = evaluate_solution(z, gender)
+    z_score = evaluate_solution_dict(z, gender)
 
     zs = Solution(
         name=f"Graphy Split {gender} Rooms",

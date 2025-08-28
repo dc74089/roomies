@@ -1,0 +1,31 @@
+{% extends 'app/base.html' %}
+
+{% block script %}
+  <script src="//cdn.jsdelivr.net/npm/force-graph"></script>
+{% endblock %}
+
+{% block content-full %}
+  <div id="graph" style="width: 100vw; height: 100vh;">
+
+  </div>
+{% endblock %}
+
+{% block delayedscript %}
+  {{ data | json_script:"graphdata" }}
+
+  <script>
+      var graphdata = JSON.parse(document.getElementById('graphdata').textContent);
+
+      const Graph = new ForceGraph(document.getElementById('graph'))
+          .graphData(graphdata)
+          .nodeId('id')
+          .nodeLabel('id')
+          .nodeAutoColorBy('group')
+          .linkSource('source')
+          .linkTarget('target')
+          .linkDirectionalArrowLength(6)
+          .linkWidth(2);
+
+
+  </script>
+{% endblock %}

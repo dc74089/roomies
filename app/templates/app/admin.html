@@ -37,6 +37,8 @@
             <p><a href="{% url 'toggle_student_login' %}" class="btn btn-danger">Currently closed for students. Click here to open.</a></p>
           {% endif %}
 
+          <p><a href="{% url 'admin_visualize_requests' %}" class="btn btn-info">Click here to visualize requests.</a> </p>
+
           {% if nonresponses %}
             <div class="accordion" id="accordionExample">
               <div class="card">

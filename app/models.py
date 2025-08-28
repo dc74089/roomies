@@ -1,4 +1,3 @@
-import hashlib
 import json
 import math
 
@@ -23,13 +22,10 @@ class SiteConfig(models.Model):
     def init_all(cls):
         SiteConfig.objects.get_or_create(id="open_for_students")
         SiteConfig.objects.get_or_create(id="reqs_per_student")
-        SiteConfig.objects.get_or_create(id="rooms")
-        SiteConfig.objects.get_or_create(id="room_max_capacity")
         SiteConfig.objects.get_or_create(id="students_can_repel")
         SiteConfig.objects.get_or_create(id="site")
 
 
-# Create your models here.
 supported_genders = (
     ("male", "Male"),
     ("female", "Female"),
@@ -102,29 +98,28 @@ class Site(models.Model):
 class Solution(models.Model):
     name = models.TextField()
     site = models.ForeignKey('Site', on_delete=models.SET_NULL, null=True, blank=True, related_name="solutions")
-    solution = models.TextField()  # Format: uuid as keys, list of person id as vals
-    capacities = models.TextField(default="{}")
+    gender = models.CharField(max_length=20, choices=supported_genders)
     explanation = models.TextField()
     added = models.DateTimeField(auto_now_add=True)
     strategy = models.TextField(null=True, blank=True)
     tuned = models.BooleanField(default=False)
 
-    def set_solution(self, soln_dict: dict):
-        self.solution = json.dumps(soln_dict)
-
-    def get_solution(self) -> dict:
-        return json.loads(self.solution)
-
-    def set_capacities(self, capacities_dict: dict):
-        self.capacities = json.dumps(capacities_dict)
-
-    def get_capacities(self) -> dict:
-        return json.loads(self.capacities)
-
     def get_score(self):
         from app.utils.evaluate import evaluate_solution
 
-        return evaluate_solution(self.get_solution(), "female" if "female" in self.name.lower() else "male")[0]
+        return evaluate_solution(self)[0]
 
     def __str__(self):
         return self.name
+
+
+class Room(models.Model):
+    internal_name = models.TextField()
+    placed_name = models.TextField()
+    solution = models.ForeignKey('Solution', on_delete=models.CASCADE, related_name="rooms")
+    capacity = models.IntegerField()
+    highest_affinity_neighbor = models.ForeignKey('Room', on_delete=models.SET_NULL, null=True, blank=True, related_name="+")
+    people = models.ManyToManyField('Person', related_name="+")
+
+    def person_ids(self):
+        return [x.id for x in self.people.all()]

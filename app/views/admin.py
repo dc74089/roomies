@@ -166,38 +166,28 @@ def helper_reqs_granted_in_soln(p_id, room):
     return x, y
 
 
-def helper_room_sorter(inp):
-    print(inp)
-    if isinstance(inp[0], Person):
-        return inp[0].name.split()[-1]
-    elif isinstance(inp[0], str):
-        return inp[0].split()[-1]
-    else:
-        return inp
+@login_required
+def graph_vis(request):
+    return render(request, 'app/admin_visualize_requests.html', {
+        "data": {
+            "nodes": [{
+                "id": p.name,
+                "group": 1 if p.gender == "male" else 2
+            } for p in Person.objects.all()],
+            "links": [{
+                "source": r.requestor.name,
+                "target": r.requestee.name
+            } for r in Request.objects.all()]
+        }
+    })
 
 
 @login_required
 def view_edit_solution(request, id):
     solution = Solution.objects.get(id=id)
-    soln = solution.get_solution()
 
-    out = {}
-
-    for room in sorted(soln.keys()):
-        out[room] = []
-
-        for person_id in soln[room]:
-            try:
-                out[room].append((Person.objects.get(id=person_id), helper_reqs_granted_in_soln(person_id, soln[room])))
-            except Exception as e:
-                traceback.print_exc()
-                out[room].append((person_id, None))
-
-        out[room] = sorted(out[room], key=helper_room_sorter)
-
-    return render(request, "app/admin_solution_edit.html", {
+    return render(request, 'app/admin_solution_edit_new.html', {
         "solution": solution,
-        "rooms": out
     })
 
 
@@ -209,38 +199,18 @@ def move_student_in_solution(request):
         data = request.POST
 
         if 'solution' in data and 'person' in data and 'to' in data:
-            solution = Solution.objects.get(id=data['solution'])
-            soln = solution.get_solution()
+            soln = Solution.objects.get(id=data['solution'])
+            student = Person.objects.get(id=data['person'])
 
-            for room in soln:
-                try:
-                    soln[room].remove(data['person'])
-                except ValueError:
-                    pass
+            for room in soln.rooms.all():
+                if student.id in room.person_ids():
+                    room.people.remove(student)
+                    room.save()
 
-            soln[data['to']].append(data['person'])
+            soln.rooms.get(id=data['to']).people.add(student)
+            soln.save()
 
-            gender = "female" if "female" in solution.name else "male"
-
-            if "(ALL)" in solution.name:
-                gender = "ALL"
-
-            score, explanation = evaluate.evaluate_solution(soln, gender)
-            solution.explanation = explanation
-
-            solution.set_solution(soln)
-            solution.save()
-
-            counts = {}
-            for room in soln:
-                for stu in soln[room]:
-                    tmp = helper_reqs_granted_in_soln(stu, soln[room])
-                    counts[stu] = f"{tmp[0]}|{tmp[1]}"
-
-            return JsonResponse({
-                "explanation": explanation.replace("\n", "<br>"),
-                "counts": counts
-            })
+            return HttpResponse(status=200)
 
     return HttpResponseBadRequest()
 
@@ -266,13 +236,12 @@ def rename_room_in_solution(request):
 def get_stats_for_student(request):
     stu = Person.objects.get(id=request.GET.get("id"))
     solution = Solution.objects.get(id=request.GET.get("solution"))
-    soln = solution.get_solution()
     room_inversion = {}
     requests = []
     requested_by = []
 
-    for room in soln:
-        for id in soln[room]:
+    for room in solution.rooms.all():
+        for id in room.person_ids():
             room_inversion[id] = room
 
     reqs = stu.requests.all()

@@ -1,10 +1,4 @@
-import json
-
-from django.conf import settings
-from tqdm import tqdm
-
-from app.models import Person, Solution, SiteConfig, Site
-from app.utils import swap, evaluate
+from app.models import Person, Solution, SiteConfig, Site, Room
 
 
 def generate_random_room(gender):
@@ -35,36 +29,27 @@ def generate_random_room(gender):
 
     s = Solution(
         name=f"Random {gender} rooms",
-        solution=json.dumps(rooms),
-        capacities=json.dumps(capacities),
+        gender=gender,
+        site=site,
         explanation="Random Rooms",
         strategy="Random"
     )
 
     s.save()
+    s.refresh_from_db()
+
+    for room, ids in rooms.items():
+        r = Room(
+            internal_name=room,
+            solution=s,
+            capacity=capacities[room],
+        )
+
+        r.save()
+
+        for id in ids:
+            r.people.add(Person.objects.get(id=id))
+
+        r.save()
 
     return s.id
-
-
-def generate_and_tune(gender, n):
-    touched_ids = []
-    best = None
-    best_score = 9999999999999
-
-    for _ in tqdm(range(n), colour="green"):
-        rand = generate_random_room(gender)
-        touched_ids.append(rand)
-
-        new_soln: Solution = swap.tune_solution_by_id(rand, 100)
-        score, _ = evaluate.evaluate_solution(new_soln.get_solution(), gender)
-
-        Solution.objects.get(id=rand).delete()
-
-        if score < best_score:
-            if best:
-                best.delete()
-
-            best = new_soln
-            best_score = score
-        else:
-            new_soln.delete()

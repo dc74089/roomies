@@ -1,14 +1,11 @@
-import json
-import math
 import random
 import traceback
 
-from django.conf import settings
 from django.utils import timezone
 from tqdm import tqdm
 
-from app.models import Person, Request, Solution, SiteConfig, Site
-from app.utils.evaluate import evaluate_solution
+from app.models import Person, Request, Solution, SiteConfig, Site, Room
+from app.utils.evaluate import evaluate_solution_dict
 from app.utils.hash import hash_solution
 
 db = None
@@ -98,7 +95,7 @@ def generate_solution(gender):
             placed.append(mvp)
             out[room].append(mvp.id)
 
-    score, explanation = evaluate_solution(out, gender)
+    score, explanation = evaluate_solution_dict(out, gender)
 
     return score, explanation, out, capacities
 
@@ -130,15 +127,32 @@ def generate_and_save(n, gender):
 
         i = 1
         for x in solutions:
+            score, explanation, solution_dict, capacities = x
             s = Solution(
                 name=f"{gender} rooms generated {timezone.now().strftime('%Y-%m-%d %H:%M')} (#{i})",
-                solution=json.dumps(x[2]),
-                capacities=json.dumps(x[3]),
-                explanation=x[1],
+                gender=gender,
+                site=Site.objects.get(id=SiteConfig.objects.get(id="site").num),
+                explanation=explanation,
                 strategy="Improved Greedy Room"
             )
 
             s.save()
+            s.refresh_from_db()
+
+            for room, ids in solution_dict.values():
+                r = Room(
+                    internal_name=room,
+                    solution=s,
+                    capacity=capacities[room],
+                )
+
+                r.save()
+
+                for id in ids:
+                    r.people.add(Person.objects.get(id=id))
+
+                r.save()
+
             i += 1
 
             out.append(s.id)

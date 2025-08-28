@@ -1,16 +1,14 @@
 import itertools
-import json
 import math
 import random
 import signal
 import traceback
 
-from django.conf import settings
 from django.utils import timezone
 from tqdm import tqdm
 
-from app.models import Solution, SiteConfig
-from app.utils.evaluate import evaluate_solution
+from app.models import Solution, Room, Person, Site, SiteConfig
+from app.utils.evaluate import evaluate_solution_dict
 
 stop = False
 
@@ -32,7 +30,7 @@ def tune_solution(solution, gender, depth, capacities, strategy="?"):
         for person in solution[room]:
             inversion[person] = room
 
-    original_score, original_desc = evaluate_solution(
+    original_score, original_desc = evaluate_solution_dict(
         {room: [x for x in inversion.keys() if inversion[x] == room] for room in rooms}, gender)
 
     i = 0
@@ -48,8 +46,8 @@ def tune_solution(solution, gender, depth, capacities, strategy="?"):
 
         print(f"Iteration {i}")
 
-        base, _desc = evaluate_solution({room: [x for x in inversion.keys() if inversion[x] == room] for room in rooms},
-                                        gender)
+        base, _desc = evaluate_solution_dict({room: [x for x in inversion.keys() if inversion[x] == room] for room in rooms},
+                                             gender)
 
         if depth == -1 and base < 1000:
             print("All students have at least one request satisfied! Exiting.")
@@ -65,7 +63,7 @@ def tune_solution(solution, gender, depth, capacities, strategy="?"):
                 old = inversion[p]
                 inversion[p] = room
 
-                new, _desc = evaluate_solution(
+                new, _desc = evaluate_solution_dict(
                     {room: [x for x in inversion.keys() if inversion[x] == room] for room in rooms}, gender)
 
                 if base <= new:  # If base better than new, swap back
@@ -75,8 +73,8 @@ def tune_solution(solution, gender, depth, capacities, strategy="?"):
                     base = new
                     swaps += 1
 
-        base, _desc = evaluate_solution({room: [x for x in inversion.keys() if inversion[x] == room] for room in rooms},
-                                        gender)
+        base, _desc = evaluate_solution_dict({room: [x for x in inversion.keys() if inversion[x] == room] for room in rooms},
+                                             gender)
 
         print("Testing swaps")
         for a, b in tqdm(itertools.combinations(shuffled_keys, 2), total=math.comb(len(inversion.keys()), 2)):
@@ -86,7 +84,7 @@ def tune_solution(solution, gender, depth, capacities, strategy="?"):
             inversion[a] = inversion[b]
             inversion[b] = tmp
 
-            new, _desc = evaluate_solution(
+            new, _desc = evaluate_solution_dict(
                 {room: [x for x in inversion.keys() if inversion[x] == room] for room in rooms}, gender)
 
             if base <= new:  # If base better than new, swap back
@@ -103,11 +101,12 @@ def tune_solution(solution, gender, depth, capacities, strategy="?"):
         if swaps == 0: break
 
     final = {room: [x for x in inversion.keys() if inversion[x] == room] for room in rooms}
-    final_score, final_desc = evaluate_solution(final, gender)
+    final_score, final_desc = evaluate_solution_dict(final, gender)
 
     s = Solution(
         name=f"Tuned {gender} rooms generated {timezone.now().strftime('%Y-%m-%d %H:%M')}",
-        solution=json.dumps(final),
+        gender=gender,
+        site=Site.objects.get(id=SiteConfig.objects.get(id="site").num),
         tuned=True,
         explanation=f"Score went from {original_score} to {final_score}. \n\n"
                     f"Orig: {original_desc} \n\n"
@@ -115,9 +114,23 @@ def tune_solution(solution, gender, depth, capacities, strategy="?"):
         strategy=f"Tuned {strategy}"
     )
 
-    s.set_capacities(capacities)
-
     s.save()
+    s.refresh_from_db()
+
+    for room, ids in final.items():
+        r = Room(
+            internal_name=room,
+            solution=s,
+            capacity=capacities[room],
+        )
+
+        r.save()
+        r.refresh_from_db()
+
+        for id in ids:
+            r.people.add(Person.objects.get(id=id))
+
+        r.save()
 
     return s
 
@@ -125,9 +138,9 @@ def tune_solution(solution, gender, depth, capacities, strategy="?"):
 def tune_solution_by_id(id, depth):
     try:
         s = Solution.objects.get(id=id)
-        soln = s.get_solution()
-        caps = s.get_capacities()
-        gender = "female" if "female" in s.name.lower() else "male"
+        soln = {room.internal_name: room.person_ids() for room in s.rooms.all()}
+        caps = {room.internal_name: room.capacity for room in s.rooms.all()}
+        gender = s.gender
 
         x = tune_solution(soln, gender, depth, caps, s.strategy)
 
