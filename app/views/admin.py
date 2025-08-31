@@ -8,7 +8,7 @@ from django.http import HttpResponseBadRequest, HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.views.decorators.csrf import csrf_exempt
 
-from app.models import Person, request_types, Request, Solution, SiteConfig, Site, supported_genders
+from app.models import Person, request_types, Request, Solution, SiteConfig, Site, supported_genders, Room
 from app.utils import evaluate
 
 
@@ -225,17 +225,12 @@ def rename_room_in_solution(request):
     if request.user.is_authenticated and request.method == "POST":
         data = request.POST
 
-        if 'solution' in data and 'old' in data and 'new' in data:
-            solution = Solution.objects.get(id=data['solution'])
-            soln = solution.get_solution()
+        if 'id' in data and 'new' in data:
+            room = Room.objects.get(id=data['id'])
+            room.placed_name = data['new']
+            room.save()
 
-            soln[data['new']] = list(soln[data['old']])
-            del soln[data['old']]
-
-            solution.set_solution(soln)
-            solution.save()
-
-            return redirect('admin_edit_solution', id=solution.id)
+            return redirect('admin_edit_solution', id=room.solution.id)
 
 
 @login_required
