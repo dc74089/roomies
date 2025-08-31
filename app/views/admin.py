@@ -1,5 +1,6 @@
 import codecs
 import csv
+import random
 import traceback
 
 from django.contrib.auth.decorators import login_required
@@ -171,13 +172,18 @@ def graph_vis(request):
     return render(request, 'app/admin_visualize_requests.html', {
         "data": {
             "nodes": [{
-                "id": p.name,
-                "group": 1 if p.gender == "male" else 2
+                "key": p.id,
+                "attributes": {
+                    "label": p.name,
+                    "gender": p.gender,
+                    "x": random.randint(-100, 100),
+                    "y": random.randint(-100, 100),
+                }
             } for p in Person.objects.all()],
-            "links": [{
-                "source": r.requestor.name,
-                "target": r.requestee.name
-            } for r in Request.objects.all()]
+            "edges": [{
+                "source": r.requestor.id,
+                "target": r.requestee.id
+            } for r in Request.objects.filter(type="attract", manual=False)]
         }
     })
 

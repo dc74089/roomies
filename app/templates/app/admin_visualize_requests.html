@@ -1,7 +1,10 @@
 {% extends 'app/base.html' %}
+{% load static %}
 
-{% block script %}
-  <script src="//cdn.jsdelivr.net/npm/force-graph"></script>
+{% block script %}<title>Quick Sigma.js Example</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sigma.js/2.4.0/sigma.min.js"></script>
+    <script src="{% static 'app/graphology.min.js' %}"></script>
+    <script src="{% static 'app/graphology-library.min.js' %}"></script>
 {% endblock %}
 
 {% block content-full %}
@@ -16,16 +19,13 @@
   <script>
       var graphdata = JSON.parse(document.getElementById('graphdata').textContent);
 
-      const Graph = new ForceGraph(document.getElementById('graph'))
-          .graphData(graphdata)
-          .nodeId('id')
-          .nodeLabel('id')
-          .nodeAutoColorBy('group')
-          .linkSource('source')
-          .linkTarget('target')
-          .linkDirectionalArrowLength(6)
-          .linkWidth(2);
+      const graph = new graphology.Graph();
+      graph.import(graphdata);
+      graphologyLibrary.layoutForceAtlas2.assign(graph, {iterations: 100});
 
-
+      const sigmaInstance = new Sigma(graph, document.getElementById("graph"), {
+          labelRenderedSizeThreshold: 3,
+          defaultEdgeType: 'arrow',
+      });
   </script>
 {% endblock %}
