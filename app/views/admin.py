@@ -192,8 +192,12 @@ def graph_vis(request):
 def view_edit_solution(request, id):
     solution = Solution.objects.get(id=id)
 
+    sort = "placed_name" if request.GET.get("sort", "") == "placed" else "internal_name"
+
     return render(request, 'app/admin_solution_edit_new.html', {
         "solution": solution,
+        "rooms": solution.rooms.all().order_by(sort),
+        "sort": sort
     })
 
 

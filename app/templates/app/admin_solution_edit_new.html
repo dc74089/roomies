@@ -85,22 +85,34 @@
 
 {% block content-full %}
   <div class="row canvas mx-4" id="canvas">
-    {% for room in solution.rooms.all %}
+    <div class="col-12">
+      <p class="text-center">
+        {% if sort == "placed_name" %}
+          <a href="?sort=canon">Sort by Canonical Name</a>
+        {% else %}
+          <a href="?sort=placed">Sort by Placed Name</a>
+        {% endif %}
+      </p>
+    </div>
+    {% for room in rooms %}
       <div class="col-12 col-md-6 col-lg-4 col-xl-3">
         <div class="room card mb-4" id="room-{{ room.id }}">
           <div class="card-body">
             <div class="room-label">
               <h6 class="room-name">{{ room.internal_name }}</h6>
               {% if room.placed_name %}
-                <h4 class="placed-name" onclick="renameRoom('{{ room.id }}', '{{ room.internal_name }}')">{{ room.placed_name }}</h4>
+                <h4 class="placed-name"
+                    onclick="renameRoom('{{ room.id }}', '{{ room.internal_name }}')">{{ room.placed_name }}</h4>
               {% else %}
-                <h4 class="placed-name" onclick="renameRoom('{{ room.id }}', '{{ room.internal_name }}')">{{ room.internal_name }}</h4>
+                <h4 class="placed-name"
+                    onclick="renameRoom('{{ room.id }}', '{{ room.internal_name }}')">{{ room.internal_name }}</h4>
               {% endif %}
             </div>
 
             <div class="students" id="students-{{ room.id }}">
               {% for student in room.people.all %}
-                <div class="student badge badge-pill badge-secondary" id="stu-{{ student.id }}" onclick="show_modal('{{ student.id }}')">
+                <div class="student badge badge-pill badge-secondary" id="stu-{{ student.id }}"
+                     onclick="show_modal('{{ student.id }}')">
                   {{ student.name }}
                 </div>
               {% endfor %}
