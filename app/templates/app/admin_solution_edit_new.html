@@ -29,6 +29,7 @@
               "to": room_id
           }).done(function (data) {
               console.log(data);
+              update_counts();
           });
       }
 
@@ -73,6 +74,12 @@
 
                   for (let student_id in data['student_scores']) {
                       $("#counts-" + student_id).html("(" + data['student_scores'][student_id] + ")");
+
+                      if (data['student_scores'][student_id].startsWith("0")) {
+                          $("#stu-" + student_id).removeClass("badge-secondary").addClass("badge-danger");
+                      } else {
+                          $("#stu-" + student_id).removeClass("badge-danger").addClass("badge-secondary");
+                      }
                   }
               })
       }
@@ -89,7 +96,6 @@
           if (evt.data.oldContainer.id != evt.data.newContainer.id) {
               console.log(evt.data);
               moveRoom(evt.data.dragEvent.data.originalSource.id, evt.data.newContainer.id);
-              update_counts()
           } else {
               // show_modal(evt.data.dragEvent.data.originalSource.id);
           }
