@@ -103,11 +103,15 @@ class Solution(models.Model):
     added = models.DateTimeField(auto_now_add=True)
     strategy = models.TextField(null=True, blank=True)
     tuned = models.BooleanField(default=False)
+    parent = models.ForeignKey('Solution', on_delete=models.SET_NULL, null=True, blank=True, related_name="children")
 
     def get_score(self):
         from app.utils.evaluate import evaluate_solution
 
-        return evaluate_solution(self)[0]
+        result = evaluate_solution(self)
+        print(result)
+
+        return result[0]
 
     def __str__(self):
         return self.name
