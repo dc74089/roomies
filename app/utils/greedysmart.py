@@ -133,7 +133,7 @@ def generate_and_save(n, gender):
             score, explanation, solution_dict, capacities = x
             s = Solution(
                 name=f"{gender} rooms generated {timezone.now().strftime('%Y-%m-%d %H:%M')} (#{i})",
-                gender=gender,
+                gender=gender.lower(),
                 site=Site.objects.get(id=SiteConfig.objects.get(id="site").num),
                 explanation=explanation,
                 strategy="Improved Greedy Room"
@@ -142,7 +142,7 @@ def generate_and_save(n, gender):
             s.save()
             s.refresh_from_db()
 
-            for room, ids in solution_dict.values():
+            for room, ids in solution_dict.items():
                 r = Room(
                     internal_name=room,
                     solution=s,

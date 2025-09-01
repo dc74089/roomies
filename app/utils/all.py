@@ -1,6 +1,7 @@
-import concurrent.futures
-
 import django
+if 'setup' in dir(django): django.setup()
+
+import concurrent.futures
 from django.db import connection
 
 from app.models import Solution

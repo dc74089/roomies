@@ -105,7 +105,7 @@ def tune_solution(solution, gender, depth, capacities, strategy="?"):
 
     s = Solution(
         name=f"Tuned {gender} rooms generated {timezone.now().strftime('%Y-%m-%d %H:%M')}",
-        gender=gender,
+        gender=gender.lower(),
         site=Site.objects.get(id=SiteConfig.objects.get(id="site").num),
         tuned=True,
         explanation=f"Score went from {original_score} to {final_score}. \n\n"
@@ -146,6 +146,9 @@ def tune_solution_by_id(id, depth):
 
         s.tuned = True
         s.save()
+
+        x.parent = s
+        x.save()
 
         return x
     except:
