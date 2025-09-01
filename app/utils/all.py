@@ -7,43 +7,43 @@ from app.models import Solution
 from app.utils import graphy, greedyroom, sum, swap, greedysmart
 
 
-def do_all():
+def do_all(depth=10000):
     solns = []
 
     solns.extend(graphy.generate_solutions())
-    solns.extend(greedyroom.generate_solutions(10000))
-    solns.extend(greedysmart.generate_solutions(10000))
-    solns.extend(sum.generate_solutions(10000))
+    solns.extend(greedyroom.generate_solutions(depth))
+    solns.extend(greedysmart.generate_solutions(depth))
+    solns.extend(sum.generate_solutions(depth))
 
     for sid in solns:
         swap.tune_solution_by_id(sid, 10)
 
 
-def run_in_parallel(gender=None):
+def run_in_parallel(gender=None, depth=10000):
     with concurrent.futures.ProcessPoolExecutor(max_workers=6) as executor:
         if gender == "male":
             futures = [
-                executor.submit(graphy.generate_solutions),
-                executor.submit(greedyroom.generate_and_save, 10000, "Male"),
-                executor.submit(greedysmart.generate_and_save, 10000, "Male"),
-                executor.submit(sum.generate_and_save, 10000, "Male"),
+                # executor.submit(graphy.generate_solutions),
+                executor.submit(greedyroom.generate_and_save, depth, "Male"),
+                executor.submit(greedysmart.generate_and_save, depth, "Male"),
+                executor.submit(sum.generate_and_save, depth, "Male"),
             ]
         elif gender == "female":
             futures = [
-                executor.submit(graphy.generate_solutions),
-                executor.submit(greedyroom.generate_and_save, 10000, "Female"),
-                executor.submit(greedysmart.generate_and_save, 10000, "Female"),
-                executor.submit(sum.generate_and_save, 10000, "Female"),
+                # executor.submit(graphy.generate_solutions),
+                executor.submit(greedyroom.generate_and_save, depth, "Female"),
+                executor.submit(greedysmart.generate_and_save, depth, "Female"),
+                executor.submit(sum.generate_and_save, depth, "Female"),
             ]
         else:
             futures = [
-                executor.submit(graphy.generate_solutions),
-                executor.submit(greedyroom.generate_and_save, 10000, "Male"),
-                executor.submit(greedyroom.generate_and_save, 10000, "Female"),
-                executor.submit(greedysmart.generate_and_save, 10000, "Male"),
-                executor.submit(greedysmart.generate_and_save, 10000, "Female"),
-                executor.submit(sum.generate_and_save, 10000, "Male"),
-                executor.submit(sum.generate_and_save, 10000, "Female"),
+                # executor.submit(graphy.generate_solutions),
+                executor.submit(greedyroom.generate_and_save, depth, "Male"),
+                executor.submit(greedyroom.generate_and_save, depth, "Female"),
+                executor.submit(greedysmart.generate_and_save, depth, "Male"),
+                executor.submit(greedysmart.generate_and_save, depth, "Female"),
+                executor.submit(sum.generate_and_save, depth, "Male"),
+                executor.submit(sum.generate_and_save, depth, "Female"),
             ]
 
         executor.shutdown(wait=True)

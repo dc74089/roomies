@@ -1,3 +1,6 @@
+import django
+if 'setup' in dir(django): django.setup()
+
 import random
 import traceback
 
@@ -70,7 +73,7 @@ def generate_solution(gender):
 
         i = 1
         for _ in range(int(block["room_count"])):
-            name = f"{block.get('name')} #{i}"
+            name = f"{block.get('name')} #{i:02d}"
             out[name] = []
             capacities[name] = int(block.get("room_capacity"))
             i += 1

@@ -1,3 +1,6 @@
+import django
+if 'setup' in dir(django): django.setup()
+
 from app.models import Person, Solution, SiteConfig, Site, Room
 
 
@@ -13,7 +16,7 @@ def generate_random_room(gender):
 
         i = 1
         for _ in range(int(block["room_count"])):
-            name = f"{block.get('name')} #{i}"
+            name = f"{block.get('name')} #{i:02d}"
             rooms[name] = []
             capacities[name] = int(block.get("room_capacity"))
             i += 1
