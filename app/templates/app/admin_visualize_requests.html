@@ -2,14 +2,58 @@
 {% load static %}
 
 {% block script %}<title>Quick Sigma.js Example</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/sigma.js/2.4.0/sigma.min.js"></script>
-    <script src="{% static 'app/graphology.min.js' %}"></script>
-    <script src="{% static 'app/graphology-library.min.js' %}"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/sigma.js/2.4.0/sigma.min.js"></script>
+  <script src="{% static 'app/graphology.min.js' %}"></script>
+  <script src="{% static 'app/graphology-library.min.js' %}"></script>
+
+  <script>
+      function show_modal(student_id) {
+          $('#modal-title').html("Loading...")
+          $("#modal-body").html("")
+
+          $("#modal").modal()
+
+          $.get("{% url 'admin_viz_stats' %}", {"id": student_id})
+              .then(function (data) {
+                  $("#modal-title").html(data['name'])
+
+                  $("#modal-body").html("<h2>Requests</h2><table class='table table-striped table-hover' id='modal-table'></table>")
+                      .append("<h2>Requested By</h2><table class='table table-striped table-hover' id='modal-table-2'></table>")
+
+                  data['requests'].forEach(function (item) {
+                      $("#modal-table").append(`<tr><td>${item['name']}</td></tr>`)
+                  })
+
+                  data['requested_by'].forEach(function (item) {
+                      $("#modal-table-2").append(`<tr><td>${item['name']}</td></tr>`)
+                  })
+              })
+      }
+  </script>
 {% endblock %}
 
 {% block content-full %}
   <div id="graph" style="width: 100vw; height: 100vh;">
 
+  </div>
+
+  <!-- Student Details Modal -->
+  <div class="modal" tabindex="-1" role="dialog" id="modal">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="modal-title">Modal title</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body" id="modal-body">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
   </div>
 {% endblock %}
 
@@ -26,6 +70,11 @@
       const sigmaInstance = new Sigma(graph, document.getElementById("graph"), {
           labelRenderedSizeThreshold: 3,
           defaultEdgeType: 'arrow',
+      });
+
+      sigmaInstance.on('clickNode', function (e) {
+          console.log(e.node);
+          show_modal(e.node)
       });
   </script>
 {% endblock %}

@@ -269,3 +269,30 @@ def get_stats_for_student(request):
         "requests": requests,
         "requested_by": requested_by
     })
+
+
+@login_required
+def get_simplified_stats(request):
+    stu = Person.objects.get(id=request.GET.get("id"))
+    room_inversion = {}
+    requests = []
+    requested_by = []
+
+    reqs = stu.requests.all()
+    reqd_by = Request.objects.filter(requestee__id=stu.id)
+
+    for req in reqs:
+        requests.append({
+            "name": req.requestee.name,
+        })
+
+    for req in reqd_by:
+        requested_by.append({
+            "name": req.requestor.name,
+        })
+
+    return JsonResponse({
+        "name": stu.name,
+        "requests": requests,
+        "requested_by": requested_by
+    })

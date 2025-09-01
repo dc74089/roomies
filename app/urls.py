@@ -22,6 +22,7 @@ urlpatterns = [
     path('admin/sites/edit', admin.edit_site, name="admin_edit_site"),
 
     path('admin/reqviz', admin.graph_vis, name="admin_visualize_requests"),
+    path('admin/reqviz/stustats', admin.get_simplified_stats, name="admin_viz_stats"),
 
     path('admin/editsolution/<int:id>', admin.view_edit_solution, name="admin_edit_solution"),
     path('admin/editsolution/movestudent', admin.move_student_in_solution, name="admin_move_student"),
