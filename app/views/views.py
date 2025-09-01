@@ -3,6 +3,7 @@ from django.http import HttpResponseBadRequest
 from django.shortcuts import render, redirect
 
 from app.models import Person, Solution, SiteConfig, Site
+from app.utils.evaluate import evaluate_solution
 
 
 # Create your views here.
@@ -16,6 +17,9 @@ def index(request):
             site = Site.objects.get(id=SiteConfig.objects.get(id="site").num)
         except Site.DoesNotExist:
             site = None
+
+        for solution in Solution.objects.filter(score__lt=0):
+            solution.reevaluate_score()
 
         return render(request, "app/admin.html", {
             "solutions": Solution.objects.all(),
