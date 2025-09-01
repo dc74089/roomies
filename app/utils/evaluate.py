@@ -27,13 +27,13 @@ def evaluate_solution_dict(soln: dict, gender):
         gq = Person.objects.filter(gender=gender)
 
     for person in gq:
-        num_reqs = person.requests.count()
+        num_reqs = person.requests.filter(manual=False).count()
         num_failures = 0
         num_successes = 0
 
         if num_reqs == 0: continue
 
-        for req in person.requests.all():
+        for req in person.requests.filter(manual=False):
             if req.requestee.id not in room_inversion or req.requestor.id not in room_inversion:
                 num_reqs -= 1
                 continue
