@@ -117,6 +117,7 @@
         <p id="explanation">{{ solution.explanation | linebreaksbr }}</p>
         {% if request.user.is_staff %}
           <a class="btn btn-primary" href="{% url 'admin:app_solution_change' solution.id %}">Edit in DB</a>
+          <a class="btn btn-primary" onclick="update_counts()">Update Counts</a>
         {% endif %}
       </div>
       <p class="text-center">
@@ -146,7 +147,7 @@
               {% for student in room.people.all %}
                 <div class="student badge badge-pill badge-secondary" id="stu-{{ student.id }}"
                      onclick="show_modal('{{ student.id }}')">
-                  {{ student.name }} <span id="counts-{{ student.id }}">(loading)</span>
+                  {{ student.name }} <span id="counts-{{ student.id }}" class="counts">(loading)</span>
                 </div>
               {% endfor %}
             </div>
