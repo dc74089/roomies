@@ -10,6 +10,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 from app.models import Person, request_types, Request, Solution, SiteConfig, Site, supported_genders, Room
 from app.utils import evaluate
+from app.utils.evaluate import evaluate_solution
 
 
 @login_required
@@ -152,21 +153,6 @@ def edit_site(request):
                     return HttpResponse(status=200)
 
 
-def helper_reqs_granted_in_soln(p_id, room):
-    x = y = 0
-    p = Person.objects.get(id=p_id)
-
-    for req in Request.objects.filter(requestor__id=p_id):
-        if req.requestee_id in room:
-            x += 1
-
-    for req in Request.objects.filter(requestee__id=p_id):
-        if req.requestor_id in room:
-            y += 1
-
-    return x, y
-
-
 @login_required
 def graph_vis(request):
     return render(request, 'app/admin_visualize_requests.html', {
@@ -223,6 +209,29 @@ def move_student_in_solution(request):
             return HttpResponse(status=200)
 
     return HttpResponseBadRequest()
+
+
+def reevaluate_solution(request):
+    solution = Solution.objects.get(id=request.GET.get("solution"))
+    solution.reevaluate_score()
+    solution.refresh_from_db()
+
+    student_scores = {}
+
+    for room in solution.rooms.all():
+        for student in room.person_ids():
+            requested_ids = Request.objects.filter(requestor_id=student).values_list("requestee_id", flat=True)
+            requestor_ids = Request.objects.filter(requestee_id=student).values_list("requestor_id", flat=True)
+            current_room_requests = len(set(room.person_ids()) & set(requested_ids))
+            current_room_requesteds = len(set(room.person_ids()) & set(requestor_ids))
+
+            student_scores[student] = f"{current_room_requests}|{current_room_requesteds}"
+
+    return JsonResponse({
+        "score": solution.score,
+        "explanation": solution.explanation.replace("\n", "<br>"),
+        "student_scores": student_scores
+    })
 
 
 def rename_room_in_solution(request):

@@ -99,19 +99,21 @@ class Solution(models.Model):
     name = models.TextField()
     site = models.ForeignKey('Site', on_delete=models.SET_NULL, null=True, blank=True, related_name="solutions")
     gender = models.CharField(max_length=20, choices=supported_genders)
+    score = models.FloatField(default=-1)
     explanation = models.TextField()
     added = models.DateTimeField(auto_now_add=True)
     strategy = models.TextField(null=True, blank=True)
     tuned = models.BooleanField(default=False)
     parent = models.ForeignKey('Solution', on_delete=models.SET_NULL, null=True, blank=True, related_name="children")
 
-    def get_score(self):
+    def reevaluate_score(self):
         from app.utils.evaluate import evaluate_solution
 
         result = evaluate_solution(self)
-        print(result)
 
-        return result[0]
+        self.score = result[0]
+        self.explanation = result[1]
+        self.save()
 
     def __str__(self):
         return self.name

@@ -64,6 +64,19 @@
               })
       }
 
+      function update_counts() {
+          $.get("{% url 'admin_reevaluate_solution' %}", {"solution": {{solution.id}}})
+              .then(function (data) {
+                  console.log(data);
+
+                  $("#explanation").html(data['explanation'])
+
+                  for (let student_id in data['student_scores']) {
+                      $("#counts-" + student_id).html("(" + data['student_scores'][student_id] + ")");
+                  }
+              })
+      }
+
       const sortable = new Draggable.Sortable(document.querySelectorAll('.students'), {
           draggable: '.student',
           mirror: {
@@ -76,9 +89,14 @@
           if (evt.data.oldContainer.id != evt.data.newContainer.id) {
               console.log(evt.data);
               moveRoom(evt.data.dragEvent.data.originalSource.id, evt.data.newContainer.id);
+              update_counts()
           } else {
               // show_modal(evt.data.dragEvent.data.originalSource.id);
           }
+      });
+
+      $(document).ready(function () {
+          update_counts();
       });
   </script>
 {% endblock %}
@@ -122,7 +140,7 @@
               {% for student in room.people.all %}
                 <div class="student badge badge-pill badge-secondary" id="stu-{{ student.id }}"
                      onclick="show_modal('{{ student.id }}')">
-                  {{ student.name }}
+                  {{ student.name }} <span id="counts-{{ student.id }}">(loading)</span>
                 </div>
               {% endfor %}
             </div>

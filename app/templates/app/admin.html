@@ -89,7 +89,7 @@
           <p><b>Newest lists are at the bottom</b></p>
           <ul>
             {% for soln in solutions %}
-              <li><a href="{% url 'admin_edit_solution' soln.id %}">{{ soln.name }} ({{ soln.get_score | floatformat:2 }})</a></li>
+              <li><a href="{% url 'admin_edit_solution' soln.id %}">{{ soln.name }} ({{ soln.score | floatformat:2 }})</a></li>
             {% endfor %}
           </ul>
         </div>
