@@ -155,12 +155,14 @@ def edit_site(request):
 
 @login_required
 def graph_vis(request):
+    show_names = request.GET.get("names", 1) == 1
+
     return render(request, 'app/admin_visualize_requests.html', {
         "data": {
             "nodes": [{
                 "key": p.id,
                 "attributes": {
-                    "label": p.name,
+                    "label": p.name if show_names else None,
                     "gender": p.gender,
                     "x": random.randint(-100, 100),
                     "y": random.randint(-100, 100),
