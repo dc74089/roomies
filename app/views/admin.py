@@ -222,8 +222,8 @@ def reevaluate_solution(request):
 
     for room in solution.rooms.all():
         for student in room.person_ids():
-            requested_ids = Request.objects.filter(requestor_id=student).values_list("requestee_id", flat=True)
-            requestor_ids = Request.objects.filter(requestee_id=student).values_list("requestor_id", flat=True)
+            requested_ids = Request.objects.filter(requestor_id=student, manual=False).values_list("requestee_id", flat=True)
+            requestor_ids = Request.objects.filter(requestee_id=student, manual=False).values_list("requestor_id", flat=True)
             current_room_requests = len(set(room.person_ids()) & set(requested_ids))
             current_room_requesteds = len(set(room.person_ids()) & set(requestor_ids))
 
