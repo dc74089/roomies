@@ -260,8 +260,8 @@ def get_stats_for_student(request):
         for id in room.person_ids():
             room_inversion[id] = room
 
-    reqs = stu.requests.all()
-    reqd_by = Request.objects.filter(requestee__id=stu.id)
+    reqs = stu.requests.filter(manual=False)
+    reqd_by = Request.objects.filter(requestee__id=stu.id, manual=False)
 
     for req in reqs:
         requests.append({
@@ -290,7 +290,7 @@ def get_simplified_stats(request):
     requested_by = []
 
     reqs = stu.requests.all()
-    reqd_by = Request.objects.filter(requestee__id=stu.id)
+    reqd_by = Request.objects.filter(requestee__id=stu.id, manual=False)
 
     for req in reqs:
         requests.append({
