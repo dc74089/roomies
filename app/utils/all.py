@@ -68,7 +68,7 @@ def tune_in_parallel():
         futures = []
 
         for soln in solns:
-            futures.append(executor.submit(tune_helper, soln.id, 10))
+            futures.append(executor.submit(tune_helper, soln.id, 100))
 
     executor.shutdown(wait=True)
 
