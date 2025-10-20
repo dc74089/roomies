@@ -153,6 +153,10 @@
             </div>
             <div>
               <small>Capacity: {{ room.capacity }}</small>
+              {% if room.highest_affinity_neighbor %}
+                <br/>
+                <small>Best Neighbor: {{ room.highest_affinity_neighbor.internal_name }}</small>
+              {% endif %}
             </div>
           </div>
         </div>
