@@ -6,23 +6,9 @@ from app.models import Solution, Request
 def suggest_best_connecting_pairs(soln_id):
     s = Solution.objects.get(id=soln_id)
 
-    # Clone solution
-    s.pk = None
-    s._state.adding = True
-    s.save()
-    s.refresh_from_db()
-
     soln: dict = {room: room.person_ids() for room in s.rooms.all()}
 
     rooms = soln.keys()
-
-    for room in rooms:
-        # Clone room
-        room.pk = None
-        room._state.adding = True
-        room.solution = s
-        room.save()
-        room.refresh_from_db()
 
     room_pairs = []  # [score, room1, room2]
 
@@ -44,7 +30,7 @@ def suggest_best_connecting_pairs(soln_id):
 
         room_pairs.append((score, room1, room2))
 
-    room_pairs.sort(reverse=True)
+    room_pairs.sort(reverse=True, key=lambda x: x[0])
 
     done = []
 
