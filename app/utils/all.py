@@ -5,16 +5,16 @@ import concurrent.futures
 from django.db import connection
 
 from app.models import Solution
-from app.utils import graphy, greedyroom, sum, swap, greedysmart
+from app.utils import graphy, sum, swap, greedysmart, anneal
 
 
 def do_all(depth=10000):
     solns = []
 
-    solns.extend(graphy.generate_solutions())
-    solns.extend(greedyroom.generate_solutions(depth))
+    solns.extend(graphy.generate_solutions(depth))
     solns.extend(greedysmart.generate_solutions(depth))
     solns.extend(sum.generate_solutions(depth))
+    solns.extend(anneal.generate_solutions(depth))
 
     for sid in solns:
         swap.tune_solution_by_id(sid, 10)
@@ -24,27 +24,27 @@ def run_in_parallel(gender=None, depth=10000):
     with concurrent.futures.ProcessPoolExecutor(max_workers=6) as executor:
         if gender == "male":
             futures = [
-                # executor.submit(graphy.generate_solutions),
-                executor.submit(greedyroom.generate_and_save, depth, "Male"),
+                executor.submit(graphy.generate_solutions),
                 executor.submit(greedysmart.generate_and_save, depth, "Male"),
                 executor.submit(sum.generate_and_save, depth, "Male"),
+                executor.submit(anneal.generate_and_save, depth, "Male"),
             ]
         elif gender == "female":
             futures = [
-                # executor.submit(graphy.generate_solutions),
-                executor.submit(greedyroom.generate_and_save, depth, "Female"),
+                executor.submit(graphy.generate_solutions),
                 executor.submit(greedysmart.generate_and_save, depth, "Female"),
                 executor.submit(sum.generate_and_save, depth, "Female"),
+                executor.submit(anneal.generate_and_save, depth, "Female"),
             ]
         else:
             futures = [
-                # executor.submit(graphy.generate_solutions),
-                executor.submit(greedyroom.generate_and_save, depth, "Male"),
-                executor.submit(greedyroom.generate_and_save, depth, "Female"),
+                executor.submit(graphy.generate_solutions),
                 executor.submit(greedysmart.generate_and_save, depth, "Male"),
                 executor.submit(greedysmart.generate_and_save, depth, "Female"),
                 executor.submit(sum.generate_and_save, depth, "Male"),
                 executor.submit(sum.generate_and_save, depth, "Female"),
+                executor.submit(anneal.generate_and_save, depth, "Male"),
+                executor.submit(anneal.generate_and_save, depth, "Female"),
             ]
 
         executor.shutdown(wait=True)
