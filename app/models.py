@@ -121,11 +121,11 @@ class Solution(models.Model):
 
 class Room(models.Model):
     internal_name = models.TextField()
-    placed_name = models.TextField()
+    placed_name = models.TextField(null=True, blank=True)
     solution = models.ForeignKey('Solution', on_delete=models.CASCADE, related_name="rooms")
     capacity = models.IntegerField()
     highest_affinity_neighbor = models.ForeignKey('Room', on_delete=models.SET_NULL, null=True, blank=True, related_name="+")
-    people = models.ManyToManyField('Person', related_name="+")
+    people = models.ManyToManyField('Person', related_name="+", null=True, blank=True)
 
     def person_ids(self):
         return [x.id for x in self.people.all()]
