@@ -136,10 +136,10 @@
               <h6 class="room-name">{{ room.internal_name }}</h6>
               {% if room.placed_name %}
                 <h4 class="placed-name"
-                    onclick="renameRoom('{{ room.id }}', '{{ room.internal_name }}')">{{ room.placed_name }}</h4>
+                    onclick="renameRoom('{{ room.id }}', '{{ room.internal_name | escapejs }}')">{{ room.placed_name | escapejs }}</h4>
               {% else %}
                 <h4 class="placed-name"
-                    onclick="renameRoom('{{ room.id }}', '{{ room.internal_name }}')">{{ room.internal_name }}</h4>
+                    onclick="renameRoom('{{ room.id }}', '{{ room.internal_name | escapejs }}')">{{ room.internal_name | escapejs }}</h4>
               {% endif %}
             </div>
 
