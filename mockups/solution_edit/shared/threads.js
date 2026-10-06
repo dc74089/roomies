@@ -72,6 +72,7 @@
   function draw(from, links) {
     init();
     clear();
+    const offLabels = []; // placed off-screen name labels, so they stack instead of overlapping
     links.forEach((link, i) => {
       if (!link.el) return;
       const to = anchor(link.el, from);
@@ -111,13 +112,18 @@
       dot.setAttribute("stroke-width", 2);
       layer.appendChild(dot);
 
-      if (to.offscreen && link.name) {
+      if (to.offscreen && link.name && !offLabels.some(l => l.name === link.name)) {
+        const below = to.y > window.innerHeight / 2;
+        const step = below ? -15 : 15;
+        let y = to.y + (below ? -14 : 16);
+        while (offLabels.some(l => Math.abs(l.x - to.x) < 120 && Math.abs(l.y - y) < 14)) y += step;
+        offLabels.push({name: link.name, x: to.x, y});
         const n = document.createElementNS(NS, "text");
         n.setAttribute("x", to.x);
-        n.setAttribute("y", to.y + (to.y > window.innerHeight / 2 ? -14 : 16));
+        n.setAttribute("y", y);
         n.setAttribute("class", "thread-label");
         n.setAttribute("fill", color);
-        n.textContent = `${link.name} ↓`.replace("↓", to.y > window.innerHeight / 2 ? "↓" : "↑");
+        n.textContent = `${link.name} ${below ? "↓" : "↑"}`;
         layer.appendChild(n);
       }
 
