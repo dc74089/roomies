@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Solution editor mockups — Roomies</title>
+  <link rel="stylesheet" href="../../app/static/app/bootstrap.css">
+  <link rel="icon" href="../../app/static/app/favicon-nobg.svg">
+  <link rel="stylesheet" href="shared/ui.css">
+  <style>
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 2rem 1rem 4rem; }
+    .mock-card { background: #fff; border: 1px solid var(--line); border-radius: .75rem; padding: 1.25rem; height: 100%; display: flex; flex-direction: column; }
+    .mock-card h3 { font-size: 1.15rem; font-weight: 800; color: var(--navy); }
+    .mock-card .letter { display: inline-flex; width: 2rem; height: 2rem; border-radius: 50%; background: var(--coral); color: #fff; align-items: center; justify-content: center; font-weight: 800; margin-right: .4rem; }
+    .mock-card ul { padding-left: 1.1rem; font-size: .9rem; }
+    .mock-card .try { font-size: .82rem; background: var(--canvas); border-radius: .5rem; padding: .6rem .75rem; margin-top: auto; }
+    h2.sec { font-size: 1rem; text-transform: uppercase; letter-spacing: .06em; color: #6c757d; font-weight: 700; margin: 2.5rem 0 1rem; }
+    .note { background: #fff; border: 1px solid var(--line); border-radius: .75rem; padding: 1rem 1.25rem; font-size: .9rem; }
+    .note li { margin-bottom: .35rem; }
+    code { color: var(--navy); }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <h1 class="h3 font-weight-bold text-secondary mb-1">Revamping <code>view_edit_solution</code></h1>
+  <p class="text-muted">Three interactive mockups using the real Bootstrap theme and dummy data (42 students, 11 rooms, a 16-room hotel).
+    All three share the same in-browser state, so edits made in one appear in the others. Use <b>Reset demo data</b> in the navbar to start over.</p>
+
+  <div class="row">
+    <div class="col-md-4 mb-3">
+      <div class="mock-card">
+        <h3><span class="letter">A</span>Workbench</h3>
+        <p class="small text-muted">The current page, rebuilt: every room at once, with much better feedback.</p>
+        <ul>
+          <li>Live <b>stats bar</b> that previews the change while you drag</li>
+          <li><b>Threads</b> from the dragged student to everyone they requested or were requested by, colored by whether the drop would satisfy them</li>
+          <li>Every room shows a <b>delta badge</b> during a drag; the best targets glow</li>
+          <li>Drop on a student to <b>swap</b>; <b>Unplaced</b> pool for parking students</li>
+          <li><b>Inspector</b> with live "best moves and swaps"</li>
+          <li>Inline hotel-room renaming, capacity beds, undo/redo, activity log</li>
+        </ul>
+        <div class="try"><b>Try:</b> hover a chip to see its threads, then drag Sofia M. around and watch the badges. Click a red chip and use a suggested swap.</div>
+        <a class="btn btn-primary btn-block mt-3" href="a_workbench.html">Open Workbench →</a>
+      </div>
+    </div>
+    <div class="col-md-4 mb-3">
+      <div class="mock-card">
+        <h3><span class="letter">B</span>Hotel placement</h3>
+        <p class="small text-muted">A second step for the "place into real hotel rooms" job. You drag whole groups, not students.</p>
+        <ul>
+          <li><b>Floor plan</b> with room numbers, bed counts, chaperone-blocked rooms</li>
+          <li><b>Connecting doors</b> show how many requests cross between the two groups</li>
+          <li>Dragging a group draws <b>affinity threads</b> (thickness = request count) to the groups it is linked to, and marks which tiles fit</li>
+          <li><b>Suggest placement</b> puts the most-linked groups behind connecting doors</li>
+          <li><b>Roster</b> view with a print stylesheet (the current page lost its print view)</li>
+        </ul>
+        <div class="try"><b>Try:</b> click "Suggest placement", then drag a group onto an occupied room to swap. Switch to Roster.</div>
+        <a class="btn btn-primary btn-block mt-3" href="b_hotel.html">Open Hotel placement →</a>
+      </div>
+    </div>
+    <div class="col-md-4 mb-3">
+      <div class="mock-card">
+        <h3><span class="letter">C</span>Fix-it queue</h3>
+        <p class="small text-muted">A guided alternative to scanning a big grid: one problem at a time.</p>
+        <ul>
+          <li>A <b>queue</b> of issues: broken hard rules, nothing granted, "not with" broken, optionally "only 1 granted"</li>
+          <li>Shows <b>only the rooms involved</b> for the student in focus</li>
+          <li>Top 4 options with <b>side effects</b> ("Priya 1→0, none!")</li>
+          <li><b>Hover an option</b> to preview it in place: chips ghost into the new room and threads recolor</li>
+          <li>Keyboard driven (<span class="kbd">J</span>/<span class="kbd">K</span>, <span class="kbd">1</span>–<span class="kbd">4</span>), and moves to the next issue on its own</li>
+        </ul>
+        <div class="try"><b>Try:</b> hover option 1 for Sofia, press <span class="kbd">1</span>. That one swap fixes two people.</div>
+        <a class="btn btn-primary btn-block mt-3" href="c_focus.html">Open Fix-it queue →</a>
+      </div>
+    </div>
+  </div>
+
+  <h2 class="sec">Shared ideas across all three</h2>
+  <div class="note">
+    <ul class="mb-0">
+      <li><b>Chip status</b> replaces the cryptic <code>(x|y)</code> counts. Pips show requests met, and colors mean: all met (green), none met (red), broke a hard rule (solid red), made no requests (dashed gray, which today is wrongly shown red).</li>
+      <li><b>Thread language:</b> solid = they requested, dashed = requested them, green = met, coral = not met, dark red = hard rule broken, orange dotted = "not with" broken, animated = unknown (someone is unplaced).</li>
+      <li><b>Manual forbid/require rules</b> are finally visible. Today they only show up as a +1,000,000 jump in the score.</li>
+      <li><b>Undo/redo</b> (<span class="kbd">⌘Z</span>/<span class="kbd">⇧⌘Z</span>) and a change log, while still editing in place.</li>
+      <li>A <b>workflow</b>: A or C to fine-tune students, then B to place groups into hotel rooms and print.</li>
+    </ul>
+  </div>
+
+  <h2 class="sec">What this would mean for the backend</h2>
+  <div class="note">
+    <ul class="mb-0">
+      <li><b>Client-side scoring.</b> Live previews need the request graph on the page (one JSON blob). <code>shared/engine.js</code> ports <code>evaluate.py</code>; one score function should be the source of truth, or the server should stay authoritative and the client only preview.</li>
+      <li><b>Endpoints:</b> a <code>swap</code> endpoint (two moves today means two re-evaluations). <code>move</code> should return the new stats directly so the page doesn't make a second <code>reevaluate</code> call, and rename should go through AJAX instead of a full form POST and reload.</li>
+      <li><b>Hotel inventory doesn't exist yet.</b> <code>Site.room_desc</code> blocks only store counts and capacities. B needs room numbers, beds, connecting pairs and blocked rooms, probably a <code>HotelRoom</code> model per Site, with <code>Room.placed_name</code> becoming a foreign key.</li>
+      <li><b>Unplaced pool:</b> students in no Room. <code>evaluate.py</code> already skips them; the page needs to list them.</li>
+      <li><b>Undo:</b> client-side is enough for a mockup; a small <code>SolutionEdit</code> log table would make it survive a reload.</li>
+    </ul>
+  </div>
+
+  <h2 class="sec">Existing issues spotted along the way</h2>
+  <div class="note">
+    <ul class="mb-0">
+      <li><code>reevaluate_solution</code> has no <code>@login_required</code>, so anyone can read student names and scores. <code>move_student_in_solution</code> is <code>@csrf_exempt</code>.</li>
+      <li><code>evaluate.py</code> counts <code>repel</code> requests in <code>num_reqs</code> but never as successes or failures, which skews the ratio and can hide "nothing granted" students.</li>
+      <li>The badge counts and the student modal treat <code>repel</code> requests as wishes to room together.</li>
+      <li><code>admin_solution_edit.html</code> (the old template) is dead code.</li>
+    </ul>
+  </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script src="shared/data.js"></script>
+<script src="shared/engine.js"></script>
+<script src="shared/ui.js"></script>
+<script>UI.navbar("index.html");</script>
+</body>
+</html>

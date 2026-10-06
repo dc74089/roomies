@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Mockup B · Hotel placement — Roomies</title>
+  <link rel="stylesheet" href="../../app/static/app/bootstrap.css">
+  <link rel="icon" href="../../app/static/app/favicon-nobg.svg">
+  <link rel="stylesheet" href="shared/ui.css">
+  <style>
+    .hp {
+      display: grid;
+      grid-template-columns: 290px 1fr;
+      height: calc(100vh - var(--nav-h) - var(--chrome-h, 92px));
+    }
+
+    .hp > * { overflow-y: auto; }
+
+    .hp-left {
+      background: #fff;
+      border-right: 1px solid var(--line);
+      padding: .5rem;
+    }
+
+    .hp-main { padding: 1rem 1.25rem; }
+
+    /* Group cards (a solution Room = a group of students) */
+    .group {
+      background: #fff;
+      border: 1px solid #d5d9e2;
+      border-left: 4px solid var(--navy);
+      border-radius: .45rem;
+      padding: .4rem .55rem;
+      margin-bottom: .45rem;
+      cursor: grab;
+      user-select: none;
+      font-size: .8rem;
+    }
+
+    .group:hover { box-shadow: 0 1px 5px rgba(29, 52, 97, .18); }
+    .group .gname { font-weight: 700; color: var(--navy); display: flex; justify-content: space-between; }
+    .group .gname small { font-weight: 600; color: #6c757d; }
+    .group .members { color: #495057; line-height: 1.35; margin-top: .15rem; }
+    .group .members .m { white-space: nowrap; }
+    .group .members .m::before { content: "●"; font-size: .55rem; margin-right: .2rem; vertical-align: middle; color: #ced4da; }
+    .group .members .m.s-all::before { color: var(--ok); }
+    .group .members .m.s-some::before { color: #9fd8ac; }
+    .group .members .m.s-zero::before, .group .members .m.s-violation::before { color: var(--hard); }
+
+    .left-drop {
+      min-height: 120px;
+      border-radius: .5rem;
+      padding: .25rem;
+    }
+
+    body.is-dragging .left-drop.hover { background: #f3f3ff; outline: 2px dashed var(--periwinkle); }
+
+    /* Floor plan */
+    .floor { margin-bottom: 1.5rem; }
+    .floor-h { display: flex; align-items: baseline; gap: .75rem; margin-bottom: .5rem; }
+    .floor-h h2 { font-size: 1rem; font-weight: 700; color: var(--navy); margin: 0; }
+    .floor-h small { color: #6c757d; }
+
+    .plan {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: .75rem;
+      padding: .9rem;
+    }
+
+    .wing { display: flex; gap: 0; }
+
+    .corridor {
+      height: 34px;
+      margin: .45rem 0;
+      border-radius: 6px;
+      background: repeating-linear-gradient(90deg, #f1f3f7 0 18px, #eceff4 18px 36px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: .65rem;
+      letter-spacing: .3em;
+      text-transform: uppercase;
+      color: #a3abb9;
+    }
+
+    .hroom {
+      position: relative;
+      flex: 1 1 0;
+      min-width: 0;
+      min-height: 140px;
+      border: 2px solid #dfe3ea;
+      border-radius: .5rem;
+      padding: .4rem;
+      margin: 0 .3rem;
+      background: #fbfcfd;
+      transition: border-color .12s, box-shadow .12s, background .12s;
+    }
+
+    .hroom .hhead { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: .3rem; }
+    .hroom .num { font-weight: 800; font-size: 1.05rem; color: var(--navy); }
+    .hroom .nbeds { font-size: .7rem; color: #6c757d; }
+    .hroom .empty-hint { font-size: .72rem; color: #b6bdc9; text-align: center; padding-top: 1.6rem; }
+    .hroom .group { margin-bottom: 0; }
+
+    .hroom.blocked {
+      background: repeating-linear-gradient(45deg, #f6f6f8 0 8px, #eeeef2 8px 16px);
+      border-style: dashed;
+    }
+
+    .hroom.blocked .empty-hint { color: #8a93a3; font-weight: 600; }
+
+    .hroom.misfit { border-color: var(--coral); }
+    .misfit-note { font-size: .68rem; color: var(--hard); font-weight: 600; margin-top: .25rem; }
+
+    /* Connecting door between a pair */
+    .door {
+      flex: 0 0 26px;
+      align-self: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      margin: 0 -.3rem;
+      z-index: 1;
+    }
+
+    .door .ic {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: #fff;
+      border: 2px solid #c9cfda;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: .75rem;
+      color: #8a93a3;
+    }
+
+    .door.strong .ic { border-color: var(--ok); color: var(--ok); background: #f2fbf4; }
+    .door.weak .ic { border-color: #f0c36d; color: #b48a2b; }
+    .door .cnt { font-size: .62rem; font-weight: 700; color: #6c757d; white-space: nowrap; }
+    .door.strong .cnt { color: var(--ok); }
+
+    /* Drag feedback */
+    .fit-badge {
+      display: none;
+      position: absolute;
+      left: .4rem;
+      bottom: -.65rem;
+      font-size: .66rem;
+      font-weight: 700;
+      padding: .05rem .4rem;
+      border-radius: 999px;
+      background: #fff;
+      border: 1px solid var(--line);
+      white-space: nowrap;
+      z-index: 2;
+    }
+
+    body.is-dragging .fit-badge { display: block; }
+    .fit-badge.good { background: var(--ok); border-color: var(--ok); color: #fff; }
+    .fit-badge.bad { background: var(--coral); border-color: var(--coral); color: #fff; }
+
+    body.is-dragging .hroom.best { border-color: var(--ok); box-shadow: 0 0 0 3px rgba(40, 167, 69, .25); }
+    body.is-dragging .hroom.hover { border-color: var(--navy); box-shadow: 0 0 0 3px rgba(29, 52, 97, .25); background: #fff; }
+    body.is-dragging .hroom.blocked { opacity: .5; }
+
+    .group.linked { box-shadow: 0 0 0 3px rgba(127, 126, 255, .4); }
+
+    /* Roster (print) view */
+    #roster { display: none; }
+    body.show-roster #plan-view { display: none; }
+    body.show-roster #roster { display: block; }
+
+    .roster-table td, .roster-table th { padding: .35rem .6rem; vertical-align: top; }
+    .roster-table .rn { font-weight: 800; color: var(--navy); width: 80px; font-size: 1.05rem; }
+
+    @media print {
+      .navbar, .mock-banner, .toolbar, .hp-left, .toast-msg { display: none !important; }
+      body { padding: 0; background: #fff; }
+      .hp { display: block; height: auto; }
+      .hp > * { overflow: visible; }
+      #plan-view { display: none !important; }
+      #roster { display: block !important; }
+      .roster-floor { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+<div class="mock-banner">Mockup B · dummy data · placing the solution's rooms into real hotel rooms (shared with mockups A and C)</div>
+
+<div class="toolbar" id="toolbar">
+  <div class="title">
+    <h1>Place in Hotel</h1>
+    <small id="hotel-name"></small>
+  </div>
+  <div class="d-flex" id="stats"></div>
+  <div class="ml-auto d-flex align-items-center" style="gap:.5rem">
+    <button class="btn btn-sm btn-success" id="suggest" title="Pairs the most-connected groups into connecting rooms">✨ Suggest placement</button>
+    <button class="btn btn-sm btn-outline-secondary" id="clear-all">Clear all</button>
+    <div class="btn-group btn-group-sm">
+      <button class="btn btn-outline-secondary" id="undo">Undo</button>
+      <button class="btn btn-outline-secondary" id="redo">Redo</button>
+    </div>
+    <div class="btn-group btn-group-sm btn-group-toggle">
+      <button class="btn btn-secondary" id="view-plan">Floor plan</button>
+      <button class="btn btn-outline-secondary" id="view-roster">Roster</button>
+    </div>
+    <button class="btn btn-sm btn-outline-secondary" onclick="document.body.classList.add('show-roster'); setView(); window.print()">Print</button>
+  </div>
+</div>
+
+<div class="hp">
+  <aside class="hp-left">
+    <div class="panel-h">Not yet placed <span class="badge badge-secondary" id="unplaced-count"></span></div>
+    <div class="left-drop" id="left-drop" data-drop data-hotel=""></div>
+    <div class="legend px-2 pt-3">
+      <div class="mb-1"><b>Threads</b> while dragging connect the group to other groups its students requested. Thicker = more requests.</div>
+      <div class="mb-1"><b class="text-success">⇆</b> Connecting door: green when the two groups behind it share requests.</div>
+      <div><a href="a_workbench.html">← Back to editing students</a></div>
+    </div>
+  </aside>
+
+  <main class="hp-main" id="main">
+    <div id="plan-view"></div>
+    <div id="roster"></div>
+  </main>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"></script>
+<script src="shared/data.js"></script>
+<script src="shared/engine.js"></script>
+<script src="shared/threads.js"></script>
+<script src="shared/drag.js"></script>
+<script src="shared/ui.js"></script>
+<script>
+  UI.navbar("b_hotel.html");
+
+  const $ = s => document.querySelector(s);
+  const $$ = s => [...document.querySelectorAll(s)];
+  const H = Engine.hotel;
+  const hotelRooms = H.floors.flatMap(f => f.rooms);
+  const byNumber = Object.fromEntries(hotelRooms.map(h => [h.number, h]));
+  let dragCtx = null;
+
+  $("#hotel-name").textContent = `${H.name} · ${Engine.solution.name}`;
+
+  function syncChromeHeight() {
+    const h = $(".mock-banner").offsetHeight + $("#toolbar").offsetHeight;
+    document.documentElement.style.setProperty("--chrome-h", h + "px");
+  }
+  window.addEventListener("resize", syncChromeHeight);
+
+  const groupIn = number => Engine.state.rooms.find(r => r.placed_name === number);
+  const isPlaced = r => r.placed_name && byNumber[r.placed_name];
+
+  function groupCard(r, inv) {
+    const members = r.people.map(pid =>
+      `<span class="m s-${Engine.studentStatus(pid, inv)}">${UI.esc(Engine.peopleById[pid].name)}</span>`).join(" ");
+    return `<div class="group" data-gid="${r.id}">
+      <div class="gname">${UI.esc(r.internal_name)} <small>${r.people.length} ppl</small></div>
+      <div class="members">${members || "<i>empty</i>"}</div>
+    </div>`;
+  }
+
+  // ---- Render -----------------------------------------------------------------
+
+  function doorInfo(a, b) {
+    const ga = groupIn(a.number), gb = groupIn(b.number);
+    if (!ga || !gb) return {cls: "", text: ""};
+    const n = Engine.affinity(ga, gb);
+    return {cls: n ? "strong" : "weak", text: n ? `${n} link${n > 1 ? "s" : ""}` : "no links", n};
+  }
+
+  function render() {
+    const inv = Engine.assignment();
+
+    // Stats
+    const placed = Engine.state.rooms.filter(isPlaced);
+    const misfits = placed.filter(r => byNumber[r.placed_name].beds < r.people.length);
+    let doorLinks = 0, doorsUsed = 0;
+    hotelRooms.forEach(h => {
+      if (!h.connects || h.number > h.connects) return;
+      const d = doorInfo(h, byNumber[h.connects]);
+      if (d.n !== undefined) { doorsUsed++; doorLinks += d.n; }
+    });
+    $("#stats").innerHTML = `
+      <div class="stat ${placed.length === Engine.state.rooms.length ? "good" : ""}"><span class="v">${placed.length}/${Engine.state.rooms.length}</span><span class="k">Groups placed</span></div>
+      <div class="stat ${misfits.length ? "bad" : "good"}"><span class="v">${misfits.length}</span><span class="k">Too few beds</span></div>
+      <div class="stat"><span class="v">${doorLinks}</span><span class="k">Links across doors</span></div>
+      <div class="stat"><span class="v">${doorsUsed}</span><span class="k">Connecting pairs filled</span></div>`;
+
+    // Left list
+    const unplaced = Engine.state.rooms.filter(r => !isPlaced(r));
+    $("#left-drop").innerHTML = unplaced.map(r => groupCard(r, inv)).join("")
+      || `<div class="text-center text-success small py-4">Every group has a hotel room ✓<br><span class="text-muted">Drag one back here to unplace it</span></div>`;
+    $("#unplaced-count").textContent = unplaced.length || "";
+
+    // Floor plans
+    $("#plan-view").innerHTML = H.floors.map(f => {
+      const half = Math.ceil(f.rooms.length / 2);
+      const row = list => {
+        let html = "";
+        list.forEach((h, i) => {
+          html += tile(h, inv);
+          const next = list[i + 1];
+          if (next && h.connects === next.number) {
+            const d = doorInfo(h, next);
+            html += `<div class="door ${d.cls}" title="Connecting door between ${h.number} and ${next.number}"><span class="ic">⇆</span><span class="cnt">${d.text}</span></div>`;
+          }
+        });
+        return `<div class="wing">${html}</div>`;
+      };
+      const free = f.rooms.filter(h => !h.blocked && !groupIn(h.number)).length;
+      return `<div class="floor">
+        <div class="floor-h"><h2>Floor ${f.level}</h2><small>${free} open room${free === 1 ? "" : "s"}</small></div>
+        <div class="plan">${row(f.rooms.slice(0, half))}<div class="corridor">hallway</div>${row(f.rooms.slice(half))}</div>
+      </div>`;
+    }).join("");
+
+    renderRoster(inv);
+    $("#undo").disabled = !Engine.canUndo();
+    $("#redo").disabled = !Engine.canRedo();
+    syncChromeHeight();
+  }
+
+  function tile(h, inv) {
+    if (h.blocked) {
+      return `<div class="hroom blocked"><div class="hhead"><span class="num">${h.number}</span><span class="nbeds">${h.beds} beds</span></div>
+        <div class="empty-hint">🔒 ${UI.esc(h.blocked)}</div></div>`;
+    }
+    const g = groupIn(h.number);
+    const misfit = g && g.people.length > h.beds;
+    return `<div class="hroom ${misfit ? "misfit" : ""}" data-drop data-hotel="${h.number}">
+      <span class="fit-badge"></span>
+      <div class="hhead"><span class="num">${h.number}</span><span class="nbeds">${h.beds} beds</span></div>
+      ${g ? groupCard(g, inv) : `<div class="empty-hint">Drop a group here</div>`}
+      ${misfit ? `<div class="misfit-note">⚠ ${g.people.length} students, ${h.beds} beds</div>` : ""}
+    </div>`;
+  }
+
+  function renderRoster(inv) {
+    $("#roster").innerHTML = `
+      <h2 class="h4 text-secondary mb-1">${UI.esc(H.name)} — Room list</h2>
+      <p class="text-muted small">${UI.esc(Engine.solution.name)}</p>
+      ${H.floors.map(f => `
+        <div class="roster-floor mb-4">
+          <h3 class="h6 text-uppercase text-muted">Floor ${f.level}</h3>
+          <table class="table table-sm roster-table bg-white">
+            <tbody>
+              ${f.rooms.map(h => {
+                const g = groupIn(h.number);
+                const who = h.blocked ? `<i class="text-muted">${UI.esc(h.blocked)}</i>`
+                  : g ? g.people.map(pid => UI.esc(Engine.peopleById[pid].name)).join(", ")
+                  : `<i class="text-muted">empty</i>`;
+                return `<tr><td class="rn">${h.number}</td><td>${who}</td>
+                  <td class="text-muted small text-right">${g ? UI.esc(g.internal_name) : ""}</td></tr>`;
+              }).join("")}
+            </tbody>
+          </table>
+        </div>`).join("")}
+      ${Engine.state.rooms.filter(r => !isPlaced(r)).length ? `<div class="alert alert-warning">Some groups are not placed yet and are not on this list.</div>` : ""}`;
+  }
+
+  // ---- Drag groups ------------------------------------------------------------
+
+  Drag.attach({
+    root: document.body,
+    item: ".group",
+    drop: "[data-drop]",
+    scroller: $("#main"),
+    onStart(el) {
+      if (document.body.classList.contains("show-roster")) return false;
+      const gid = Number(el.dataset.gid);
+      const g = Engine.room(gid);
+      const fromNumber = isPlaced(g) ? g.placed_name : null;
+
+      // Score every free/occupied tile: bed fit + links through its connecting door
+      const scores = {};
+      hotelRooms.forEach(h => {
+        if (h.blocked) return;
+        const fits = h.beds >= g.people.length;
+        const partner = h.connects && groupIn(h.connects);
+        const via = partner && partner.id !== gid ? Engine.affinity(g, partner) : 0;
+        scores[h.number] = {fits, via, partner, waste: h.beds - g.people.length};
+      });
+      const ranked = Object.entries(scores)
+        .filter(([n, s]) => s.fits && n !== fromNumber && !groupIn(n))
+        .sort((a, b) => b[1].via - a[1].via || a[1].waste - b[1].waste);
+      const best = ranked.length && ranked[0][1].via > 0 ? ranked[0][0] : null;
+
+      $$(".hroom[data-hotel]").forEach(t => {
+        const s = scores[t.dataset.hotel];
+        const b = t.querySelector(".fit-badge");
+        t.classList.toggle("best", t.dataset.hotel === best);
+        if (t.dataset.hotel === fromNumber) { b.textContent = "current"; b.className = "fit-badge"; return; }
+        if (!s.fits) { b.textContent = `only ${byNumber[t.dataset.hotel].beds} beds`; b.className = "fit-badge bad"; return; }
+        const occ = groupIn(t.dataset.hotel);
+        const parts = [];
+        if (s.via) parts.push(`⇆ +${s.via} link${s.via > 1 ? "s" : ""}`);
+        if (occ) parts.push("swap");
+        b.textContent = parts.join(" · ") || "fits";
+        b.className = "fit-badge " + (s.via ? "good" : "");
+      });
+
+      // Other groups this one is connected to
+      const linked = Engine.state.rooms
+        .filter(o => o.id !== gid)
+        .map(o => ({o, n: Engine.affinity(g, o)}))
+        .filter(x => x.n > 0);
+      linked.forEach(x => $$(`.group[data-gid="${x.o.id}"]`).forEach(e => e.classList.add("linked")));
+      dragCtx = {gid, linked};
+    },
+    onMove({x, y, dropEl}) {
+      $$(".hroom.hover, .left-drop.hover").forEach(e => e.classList.remove("hover"));
+      if (dropEl) dropEl.classList.add("hover");
+      Threads.draw({x, y}, dragCtx.linked.map(({o, n}) => ({
+        el: [...document.querySelectorAll(`.group[data-gid="${o.id}"]`)].find(e => !e.classList.contains("drag-ghost") && !e.classList.contains("drag-source")),
+        type: "affinity", weight: n, label: String(n),
+      })));
+    },
+    onDrop({dropEl}) {
+      if (!dropEl) return;
+      const number = dropEl.dataset.hotel || null;
+      Engine.place(dragCtx.gid, number);
+      if (Engine.state.log[0]) UI.toast(Engine.state.log[0].label);
+    },
+    onEnd() {
+      dragCtx = null;
+      Threads.clear();
+      $$(".hroom.hover, .hroom.best, .left-drop.hover, .group.linked").forEach(e => e.classList.remove("hover", "best", "linked"));
+    },
+  });
+
+  // ---- Suggest placement --------------------------------------------------------
+  // Greedy: put the most-connected pairs of groups behind connecting doors,
+  // then fill remaining groups into the tightest-fitting free rooms.
+
+  function suggest() {
+    const groups = Engine.state.rooms.filter(r => !isPlaced(r));
+    if (!groups.length) { UI.toast("Everything is already placed", false); return; }
+    const free = new Set(hotelRooms.filter(h => !h.blocked && !groupIn(h.number)).map(h => h.number));
+    const assign = [];
+    const done = new Set();
+
+    const pairs = [];
+    for (let i = 0; i < groups.length; i++) for (let j = i + 1; j < groups.length; j++) {
+      const n = Engine.affinity(groups[i], groups[j]);
+      if (n > 0) pairs.push([n, groups[i], groups[j]]);
+    }
+    pairs.sort((a, b) => b[0] - a[0]);
+
+    for (const [, a, b] of pairs) {
+      if (done.has(a.id) || done.has(b.id)) continue;
+      const slot = hotelRooms.find(h => h.connects && free.has(h.number) && free.has(h.connects) &&
+        h.beds >= a.people.length && byNumber[h.connects].beds >= b.people.length);
+      if (!slot) continue;
+      assign.push([a.id, slot.number], [b.id, slot.connects]);
+      free.delete(slot.number); free.delete(slot.connects);
+      done.add(a.id); done.add(b.id);
+    }
+
+    groups.filter(g => !done.has(g.id))
+      .sort((a, b) => b.people.length - a.people.length)
+      .forEach(g => {
+        const slot = [...free].map(n => byNumber[n])
+          .filter(h => h.beds >= g.people.length)
+          .sort((a, b) => (a.beds - b.beds) || (a.connects ? 1 : 0) - (b.connects ? 1 : 0))[0];
+        if (!slot) return;
+        assign.push([g.id, slot.number]);
+        free.delete(slot.number);
+      });
+
+    Engine.placeMany(assign, `Suggested placement for ${assign.length} groups`);
+    UI.toast(Engine.state.log[0].label);
+  }
+
+  function setView() {
+    const roster = document.body.classList.contains("show-roster");
+    $("#view-plan").className = "btn " + (roster ? "btn-outline-secondary" : "btn-secondary");
+    $("#view-roster").className = "btn " + (roster ? "btn-secondary" : "btn-outline-secondary");
+  }
+
+  $("#suggest").addEventListener("click", suggest);
+  $("#clear-all").addEventListener("click", () => {
+    Engine.placeMany(Engine.state.rooms.map(r => [r.id, null]), "Cleared all hotel placements");
+    UI.toast(Engine.state.log[0].label);
+  });
+  $("#undo").addEventListener("click", () => Engine.undo());
+  $("#redo").addEventListener("click", () => Engine.redo());
+  $("#view-plan").addEventListener("click", () => { document.body.classList.remove("show-roster"); setView(); });
+  $("#view-roster").addEventListener("click", () => { document.body.classList.add("show-roster"); setView(); });
+
+  Engine.onChange(render);
+  render();
+</script>
+</body>
+</html>

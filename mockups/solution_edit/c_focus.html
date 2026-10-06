@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Mockup C · Fix-it queue — Roomies</title>
+  <link rel="stylesheet" href="../../app/static/app/bootstrap.css">
+  <link rel="icon" href="../../app/static/app/favicon-nobg.svg">
+  <link rel="stylesheet" href="shared/ui.css">
+  <style>
+    .fq {
+      display: grid;
+      grid-template-columns: 250px 1fr;
+      height: calc(100vh - var(--nav-h) - var(--chrome-h, 92px));
+    }
+
+    .fq > * { overflow-y: auto; }
+
+    .queue { background: #fff; border-right: 1px solid var(--line); padding: .5rem; }
+    .queue ol { list-style: none; padding: 0; margin: 0; counter-reset: q; }
+    .queue li {
+      counter-increment: q;
+      display: flex;
+      gap: .5rem;
+      align-items: center;
+      padding: .45rem .5rem;
+      border-radius: .4rem;
+      cursor: pointer;
+      font-size: .85rem;
+    }
+
+    .queue li::before {
+      content: counter(q);
+      flex: 0 0 1.4rem;
+      height: 1.4rem;
+      border-radius: 50%;
+      background: #eef0f4;
+      color: #6c757d;
+      font-size: .7rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .queue li:hover { background: var(--canvas); }
+    .queue li.active { background: #ecebff; }
+    .queue li.active::before { background: var(--periwinkle); color: #fff; }
+    .queue li.resolved { color: #9aa3b1; text-decoration: line-through; }
+    .queue li.resolved::before { content: "✓"; background: var(--ok); color: #fff; }
+    .queue .tag { margin-left: auto; font-size: .62rem; font-weight: 700; text-transform: uppercase; padding: .05rem .35rem; border-radius: 3px; }
+    .tag.zero { background: #ffe1e1; color: #b33a3a; }
+    .tag.hard { background: var(--hard); color: #fff; }
+    .tag.low { background: #fff3cd; color: #8a6d00; }
+    .tag.repel { background: #fff0e0; color: #b45a00; }
+
+    .stage { padding: 1.25rem 1.5rem; }
+
+    .focus-head { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
+    .focus-head h2 { margin: 0; font-size: 1.6rem; font-weight: 800; color: var(--navy); }
+    .focus-head .why { color: #6c757d; }
+    .focus-head .nav-btns { margin-left: auto; }
+
+    /* The rooms involved, side by side */
+    .involved {
+      display: flex;
+      gap: 1rem;
+      align-items: flex-start;
+      overflow-x: auto;
+      padding: .75rem .25rem 1.25rem;
+    }
+
+    .iroom {
+      flex: 0 0 210px;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: .6rem;
+      padding: .55rem;
+      position: relative;
+      transition: box-shadow .12s, border-color .12s;
+    }
+
+    .iroom.home { border: 2px solid var(--navy); }
+    .iroom .ih { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: .4rem; }
+    .iroom .ih b { color: var(--navy); }
+    .iroom .ih small { color: #6c757d; }
+    .iroom .why-here { font-size: .68rem; color: #6c757d; margin-top: .25rem; }
+    .iroom.preview-dest { border-color: var(--ok); box-shadow: 0 0 0 3px rgba(40, 167, 69, .25); }
+    body.is-dragging .iroom.hover { box-shadow: 0 0 0 3px var(--navy); }
+    .chip.focus { outline: 3px solid var(--navy); outline-offset: 1px; font-weight: 700; }
+    .chip.ghosted { opacity: .35; border-style: dashed; }
+    .chip.slot { visibility: hidden; }
+    .chip.incoming { border-style: dashed; border-color: var(--ok); background: #f2fbf4; }
+
+    /* Options */
+    .opts { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: .75rem; }
+    .opt {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: .6rem;
+      padding: .7rem .85rem;
+      cursor: pointer;
+      transition: border-color .12s, box-shadow .12s;
+    }
+
+    .opt:hover, .opt.hl { border-color: var(--periwinkle); box-shadow: 0 0 0 3px rgba(127, 126, 255, .2); }
+    .opt .t { font-weight: 700; color: var(--navy); }
+    .opt .rank { float: right; font-size: .7rem; font-weight: 700; color: #fff; background: var(--ok); border-radius: 999px; padding: .05rem .5rem; }
+    .opt .rank.meh { background: #adb5bd; }
+    .opt .fx { font-size: .8rem; margin: .35rem 0 .5rem; }
+    .opt .fx div { display: flex; gap: .4rem; }
+    .opt .fx .up { color: var(--ok); }
+    .opt .fx .down { color: var(--hard); }
+    .opt .btn { font-size: .78rem; }
+
+    .done-state { text-align: center; padding: 4rem 1rem; color: #6c757d; }
+    .done-state .big { font-size: 3rem; }
+  </style>
+</head>
+<body>
+<div class="mock-banner">Mockup C · dummy data · a guided queue: one problem at a time, only the rooms that matter (shared with mockups A and B)</div>
+
+<div class="toolbar" id="toolbar">
+  <div class="title">
+    <h1>Fix-it Queue</h1>
+    <small id="soln-name"></small>
+  </div>
+  <div class="d-flex" id="stats"></div>
+  <div class="ml-auto d-flex align-items-center" style="gap:.5rem">
+    <div class="custom-control custom-switch mr-2">
+      <input type="checkbox" class="custom-control-input" id="include-low">
+      <label class="custom-control-label small" for="include-low">Include "only 1 granted"</label>
+    </div>
+    <div class="btn-group btn-group-sm">
+      <button class="btn btn-outline-secondary" id="undo">Undo</button>
+      <button class="btn btn-outline-secondary" id="redo">Redo</button>
+    </div>
+  </div>
+</div>
+
+<div class="fq">
+  <aside class="queue">
+    <div class="panel-h">Issues <span class="badge badge-danger" id="q-count"></span></div>
+    <ol id="queue"></ol>
+    <div class="legend px-2 pt-3 small">
+      Keyboard: <span class="kbd">J</span>/<span class="kbd">K</span> next/prev issue,
+      <span class="kbd">1</span>–<span class="kbd">4</span> apply option.
+    </div>
+  </aside>
+  <main class="stage" id="stage"></main>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"></script>
+<script src="shared/data.js"></script>
+<script src="shared/engine.js"></script>
+<script src="shared/threads.js"></script>
+<script src="shared/drag.js"></script>
+<script src="shared/ui.js"></script>
+<script>
+  UI.navbar("c_focus.html");
+
+  const $ = s => document.querySelector(s);
+  const $$ = s => [...document.querySelectorAll(s)];
+  let current = null;       // pid in focus
+  let resolved = new Set(); // pids fixed this session (shown struck through)
+  let hoverOpt = null;
+  let options = [];
+
+  $("#soln-name").textContent = `${Engine.solution.name} · ${Engine.solution.strategy}`;
+
+  function syncChromeHeight() {
+    const h = $(".mock-banner").offsetHeight + $("#toolbar").offsetHeight;
+    document.documentElement.style.setProperty("--chrome-h", h + "px");
+  }
+  window.addEventListener("resize", () => { syncChromeHeight(); drawThreads(); });
+
+  // ---- Build the issue queue -----------------------------------------------------
+
+  function issues() {
+    const inv = Engine.assignment();
+    const s = Engine.summary();
+    const list = [];
+    s.violations.forEach(v => list.push({pid: v.requestor, tag: "hard", label: "Hard rule", why: `${v.type === "forbid" ? "must not room with" : "must room with"} ${Engine.peopleById[v.requestee].name}`}));
+    s.zeroGranted.forEach(pid => list.push({pid, tag: "zero", label: "0 granted", why: "none of their requests are in their room"}));
+    s.repelBroken.forEach(v => list.push({pid: v.requestor, tag: "repel", label: "Not with", why: `asked not to room with ${Engine.peopleById[v.requestee].name}`}));
+    if ($("#include-low").checked) {
+      Engine.people.forEach(p => {
+        const d = Engine.studentDetail(p.id, inv);
+        if (d.wantsTotal >= 2 && d.wantsMet === 1) list.push({pid: p.id, tag: "low", label: "1 granted", why: `only 1 of ${d.wantsTotal} requests granted`});
+      });
+    }
+    const seen = new Set();
+    return list.filter(i => !seen.has(i.pid) && seen.add(i.pid));
+  }
+
+  // ---- Options for the focused student -------------------------------------------
+
+  function sideEffects(pid, roomId, swapWith) {
+    const before = Engine.assignment();
+    const after = {...before};
+    const from = before[pid];
+    after[pid] = roomId;
+    if (swapWith) after[swapWith] = from;
+    const changes = [];
+    Engine.people.forEach(p => {
+      if (p.id === pid) return;
+      const a = Engine.studentDetail(p.id, before), b = Engine.studentDetail(p.id, after);
+      if (a.wantsMet !== b.wantsMet) changes.push({p, from: a.wantsMet, to: b.wantsMet, total: a.wantsTotal});
+    });
+    return {changes, after};
+  }
+
+  function buildOptions(pid) {
+    const inv = Engine.assignment();
+    const from = inv[pid];
+    const out = [];
+    Engine.state.rooms.forEach(r => {
+      if (r.id === from) return;
+      if (r.people.length < r.capacity) out.push({kind: "move", room: r, p: Engine.preview(pid, r.id)});
+      r.people.forEach(o => out.push({kind: "swap", room: r, other: o, p: Engine.preview(pid, r.id, o)}));
+    });
+    out.sort((a, b) => a.p.deltaScore - b.p.deltaScore);
+    return out.slice(0, 4).map(o => ({...o, fx: sideEffects(pid, o.room.id, o.other)}));
+  }
+
+  // ---- Render ---------------------------------------------------------------------
+
+  function render() {
+    const s = Engine.summary();
+    const pct = s.total ? Math.round(100 * s.granted / s.total) : 0;
+    $("#stats").innerHTML = `
+      <div class="stat"><span class="v">${s.granted}/${s.total} <small class="text-muted">${pct}%</small></span><span class="k">Requests granted</span></div>
+      <div class="stat ${s.zeroGranted.length ? "bad" : "good"}"><span class="v">${s.zeroGranted.length}</span><span class="k">Got none</span></div>
+      <div class="stat ${s.violations.length ? "bad" : "good"}"><span class="v">${s.violations.length}</span><span class="k">Hard rules broken</span></div>`;
+
+    const list = issues();
+    const open = new Set(list.map(i => i.pid));
+    resolved = new Set([...resolved].filter(pid => !open.has(pid)));
+    if (current && !open.has(current) && !resolved.has(current)) resolved.add(current);
+    if (!current || (!open.has(current) && !resolved.has(current))) current = list[0] ? list[0].pid : null;
+
+    const resolvedItems = [...resolved].map(pid => ({pid, tag: "", label: "", why: "", resolved: true}));
+    $("#queue").innerHTML = list.concat(resolvedItems).map(i => `
+      <li data-pid="${i.pid}" class="${i.pid === current ? "active" : ""} ${i.resolved ? "resolved" : ""}">
+        <span>${UI.esc(Engine.peopleById[i.pid].name)}</span>${i.tag ? `<span class="tag ${i.tag}">${i.label}</span>` : ""}
+      </li>`).join("");
+    $("#q-count").textContent = list.length || "";
+
+    $("#undo").disabled = !Engine.canUndo();
+    $("#redo").disabled = !Engine.canRedo();
+
+    renderStage(list);
+    syncChromeHeight();
+  }
+
+  function renderStage(list) {
+    Threads.clear();
+    if (!current) {
+      $("#stage").innerHTML = `<div class="done-state"><div class="big">🎉</div><h3>Queue is clear</h3>
+        <p>Everyone has at least one request granted and no rules are broken.</p>
+        <a class="btn btn-primary" href="b_hotel.html">Next: place rooms in the hotel →</a></div>`;
+      return;
+    }
+    const inv = Engine.assignment();
+    const d = Engine.studentDetail(current, inv);
+    const issue = list.find(i => i.pid === current);
+    options = buildOptions(current);
+
+    // Rooms that matter: theirs, plus wherever their connections are
+    const ids = [inv[current]];
+    d.links.forEach(l => { if (inv[l.otherId] !== undefined && !ids.includes(inv[l.otherId])) ids.push(inv[l.otherId]); });
+    options.forEach(o => { if (!ids.includes(o.room.id)) ids.push(o.room.id); });
+
+    const reason = rid => {
+      if (rid === inv[current]) return "current room";
+      const names = d.links.filter(l => inv[l.otherId] === rid).map(l => l.other.name.split(" ")[0]);
+      return names.length ? `has ${[...new Set(names)].join(", ")}` : "suggested destination";
+    };
+
+    $("#stage").innerHTML = `
+      <div class="focus-head">
+        <div>
+          <h2>${UI.esc(d.person.name)}</h2>
+          <div class="why">${issue ? UI.esc(issue.why) : "resolved ✓"} · ${d.wantsMet}/${d.wantsTotal} requests granted · requested by ${d.wantedByTotal}</div>
+        </div>
+        <div class="nav-btns btn-group btn-group-sm">
+          <button class="btn btn-outline-secondary" data-step="-1">← Prev</button>
+          <button class="btn btn-outline-secondary" data-step="1">Skip →</button>
+        </div>
+      </div>
+      <div class="panel-h px-0">Rooms involved <span class="text-muted text-normal">drag ${UI.esc(d.person.name.split(" ")[0])} or anyone else between them</span></div>
+      <div class="involved" id="involved">
+        ${ids.map(rid => {
+          const r = Engine.room(rid);
+          return `<div class="iroom ${rid === inv[current] ? "home" : ""}" data-drop data-room="${rid}">
+            <div class="ih"><b>${UI.esc(Engine.roomLabel(r))}</b><small>${r.people.length}/${r.capacity}</small></div>
+            <div class="ibody">${r.people.map(pid => UI.chip(pid, inv, pid === current ? "focus" : "")).join("")}<div class="chip slot">&nbsp;</div></div>
+            <div class="why-here">${UI.esc(reason(rid))}</div>
+          </div>`;
+        }).join("")}
+      </div>
+      <div class="panel-h px-0">Best options <span class="text-muted text-normal">hover to preview · ranked by overall score</span></div>
+      ${options.length && options[0].p.deltaScore >= -1e-9 ? `<div class="alert alert-warning py-2 small">
+        <b>No single move or swap improves things for ${UI.esc(d.person.name.split(" ")[0])}</b> without costing someone else.
+        Try a 3-way rotation by dragging above, or check whether one of their friends could move <i>to them</i>.</div>` : ""}
+      <div class="opts">
+        ${options.map((o, i) => {
+          const g = o.p.deltaGranted, z = o.p.deltaZero;
+          const better = o.p.deltaScore < -1e-9;
+          const title = o.kind === "move"
+            ? `Move to ${UI.esc(Engine.roomLabel(o.room))}`
+            : `Swap with ${UI.esc(Engine.peopleById[o.other].name)}`;
+          const me = o.p.student;
+          const fx = o.fx.changes.slice(0, 4).map(c =>
+            `<div class="${c.to > c.from ? "up" : "down"}">${c.to > c.from ? "▲" : "▼"} ${UI.esc(c.p.name)} ${c.from}→${c.to} of ${c.total}${c.to === 0 && c.total ? " <b>(none!)</b>" : ""}</div>`).join("");
+          return `<div class="opt" data-opt="${i}">
+            <span class="rank ${better ? "" : "meh"}">${i + 1} · ${g >= 0 ? "+" : ""}${g} granted${z ? `, ${z < 0 ? "−" + -z : "+" + z} none` : ""}</span>
+            <div class="t">${title}</div>
+            <div class="fx">
+              <div class="${me.wantsMet > d.wantsMet ? "up" : me.wantsMet < d.wantsMet ? "down" : ""}">● ${UI.esc(d.person.name)} ${d.wantsMet}→${me.wantsMet} of ${me.wantsTotal}</div>
+              ${fx || `<div class="text-muted">No one else affected</div>`}
+              ${o.fx.changes.length > 4 ? `<div class="text-muted">+${o.fx.changes.length - 4} more</div>` : ""}
+            </div>
+            <button class="btn btn-sm ${better ? "btn-success" : "btn-outline-secondary"}" data-apply="${i}">Apply <span class="kbd ml-1">${i + 1}</span></button>
+          </div>`;
+        }).join("")}
+      </div>`;
+    requestAnimationFrame(() => drawThreads());
+  }
+
+  // Persistent threads from the focused student (or the previewed hypothetical)
+  function drawThreads(inv) {
+    if (!current || document.body.classList.contains("is-dragging")) return;
+    const focusEl = document.querySelector(`.iroom .chip[data-pid="${current}"]`);
+    if (!focusEl) return Threads.clear();
+    inv = inv || (hoverOpt !== null ? options[hoverOpt].fx.after : Engine.assignment());
+    const r = focusEl.getBoundingClientRect();
+    const d = Engine.studentDetail(current, inv);
+    Threads.draw({x: r.right - 10, y: r.top + r.height / 2}, d.links.map(l => ({
+      el: document.querySelector(`.iroom .chip[data-pid="${l.otherId}"]`),
+      type: l.type, dir: l.dir, satisfied: l.satisfied, name: l.other.name,
+    })));
+  }
+
+  // Hovering an option previews it in place: chips ghost out of their room and
+  // appear (dashed) in the destination, and threads recolour.
+  function previewOption(i) {
+    clearPreview();
+    hoverOpt = i;
+    if (i === null) return drawThreads();
+    const o = options[i];
+    const inv = Engine.assignment();
+    const fromRoom = inv[current];
+    const ghost = (pid, toRoom) => {
+      const src = document.querySelector(`.iroom .chip[data-pid="${pid}"]`);
+      if (src) src.classList.add("ghosted");
+      const dest = document.querySelector(`.iroom[data-room="${toRoom}"] .ibody`);
+      // Fill the reserved slot so nothing below shifts
+      const slot = dest && dest.querySelector(".slot");
+      if (slot) slot.outerHTML = UI.chip(pid, o.fx.after, "incoming preview-chip");
+    };
+    ghost(current, o.room.id);
+    if (o.other) ghost(o.other, fromRoom);
+    $(`.iroom[data-room="${o.room.id}"]`).classList.add("preview-dest");
+    $(`.opt[data-opt="${i}"]`).classList.add("hl");
+
+    // Threads originate from the incoming (previewed) chip
+    const focusEl = document.querySelector(`.preview-chip[data-pid="${current}"]`);
+    const r = focusEl.getBoundingClientRect();
+    const d = Engine.studentDetail(current, o.fx.after);
+    Threads.draw({x: r.right - 10, y: r.top + r.height / 2}, d.links.map(l => ({
+      el: document.querySelector(`.iroom .chip[data-pid="${l.otherId}"]:not(.ghosted)`),
+      type: l.type, dir: l.dir, satisfied: l.satisfied, name: l.other.name,
+    })));
+  }
+
+  function clearPreview() {
+    $$(".preview-chip").forEach(e => { e.outerHTML = `<div class="chip slot">&nbsp;</div>`; });
+    $$(".chip.ghosted").forEach(e => e.classList.remove("ghosted"));
+    $$(".preview-dest, .opt.hl").forEach(e => e.classList.remove("preview-dest", "hl"));
+  }
+
+  function apply(i) {
+    const o = options[i];
+    if (!o) return;
+    hoverOpt = null;
+    if (o.kind === "move") Engine.move(current, o.room.id); else Engine.swap(current, o.other);
+    UI.toast(Engine.state.log[0].label);
+    // If fixed, jump to the next open issue
+    const next = issues();
+    if (!next.some(x => x.pid === current) && next.length) {
+      resolved.add(current);
+      current = next[0].pid;
+      render();
+    }
+  }
+
+  function step(dir) {
+    const list = issues();
+    if (!list.length) return;
+    const i = list.findIndex(x => x.pid === current);
+    current = list[(i + dir + list.length) % list.length].pid;
+    hoverOpt = null;
+    render();
+  }
+
+  // ---- Events --------------------------------------------------------------------
+
+  document.addEventListener("mouseover", e => {
+    if (document.body.classList.contains("is-dragging")) return;
+    const o = e.target.closest(".opt");
+    const i = o ? Number(o.dataset.opt) : null;
+    if (i !== hoverOpt) previewOption(i);
+  });
+
+  document.addEventListener("click", e => {
+    const li = e.target.closest("#queue li");
+    if (li) { current = li.dataset.pid; hoverOpt = null; render(); return; }
+    const a = e.target.closest("[data-apply]");
+    if (a) { apply(Number(a.dataset.apply)); return; }
+    const s = e.target.closest("[data-step]");
+    if (s) step(Number(s.dataset.step));
+  });
+
+  document.addEventListener("keydown", e => {
+    if (e.metaKey || e.ctrlKey || e.target.tagName === "INPUT") return;
+    if (e.key === "j") step(1);
+    if (e.key === "k") step(-1);
+    if (["1", "2", "3", "4"].includes(e.key)) apply(Number(e.key) - 1);
+  });
+
+  $("#stage").addEventListener("scroll", () => drawThreads(), {passive: true});
+  $("#include-low").addEventListener("change", render);
+  $("#undo").addEventListener("click", () => Engine.undo());
+  $("#redo").addEventListener("click", () => Engine.redo());
+
+  // Free-form dragging within the involved rooms, same rules as Workbench
+  let dragPid = null;
+  Drag.attach({
+    root: document.body,
+    item: ".iroom .chip:not(.preview-chip)",
+    drop: "[data-drop]",
+    onStart(el) { clearPreview(); hoverOpt = null; dragPid = el.dataset.pid; },
+    onMove({x, y, dropEl, overItemEl}) {
+      $$(".iroom.hover").forEach(e => e.classList.remove("hover"));
+      let inv = Engine.assignment();
+      if (dropEl) {
+        dropEl.classList.add("hover");
+        inv = {...inv, [dragPid]: Number(dropEl.dataset.room)};
+        if (overItemEl) inv[overItemEl.dataset.pid] = Engine.assignment()[dragPid];
+      }
+      const d = Engine.studentDetail(dragPid, inv);
+      Threads.draw({x, y}, d.links.map(l => ({
+        el: document.querySelector(`.iroom .chip[data-pid="${l.otherId}"]:not(.drag-source)`),
+        type: l.type, dir: l.dir, satisfied: l.satisfied, name: l.other.name,
+      })));
+    },
+    onDrop({dropEl, overItemEl}) {
+      if (!dropEl) return;
+      const to = Number(dropEl.dataset.room);
+      if (overItemEl && Engine.assignment()[overItemEl.dataset.pid] !== Engine.assignment()[dragPid]) Engine.swap(dragPid, overItemEl.dataset.pid);
+      else Engine.move(dragPid, to);
+      if (Engine.state.log[0]) UI.toast(Engine.state.log[0].label);
+    },
+    onEnd() {
+      dragPid = null;
+      $$(".iroom.hover").forEach(e => e.classList.remove("hover"));
+      requestAnimationFrame(() => drawThreads());
+    },
+  });
+
+  Engine.onChange(render);
+  render();
+</script>
+</body>
+</html>
