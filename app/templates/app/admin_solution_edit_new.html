@@ -1,210 +1,84 @@
 {% extends 'app/base.html' %}
+{% load static %}
+
+{% block title %}Edit {{ solution.name }} | Roomies{% endblock %}
 
 {% block script %}
-  <style>
-      .student {
-          font-size: 1rem;
-          margin-bottom: 0.25rem;
-      }
-
-      .students {
-          min-height: 10px;
-      }
-  </style>
-{% endblock %}
-
-{% block delayedscript %}
-  <script src="https://cdn.jsdelivr.net/npm/@shopify/draggable@1.0.0-beta.11/lib/draggable.bundle.js"></script>
-
-  <script>
-      function moveRoom(student_id, room_id) {
-          student_id = student_id.replace('stu-', '');
-          room_id = room_id.replace('students-', '');
-
-          console.log(student_id, room_id);
-
-          $.post("{% url 'admin_move_student' %}", {
-              "solution": "{{ solution.id }}",
-              "person": student_id,
-              "to": room_id
-          }).done(function (data) {
-              console.log(data);
-              update_counts();
-          });
-      }
-
-      function renameRoom(room_id, internal_name) {
-          $("#rename-modal-title").html("Rename " + internal_name);
-          $("#room-id").val(room_id);
-
-          $("#rename-modal").modal()
-      }
-
-      function show_modal(student_id) {
-          student_id = student_id.replace('stu-', '');
-
-          $('#modal-title').html("Loading...")
-          $("#modal-body").html("")
-
-          $("#modal").modal()
-
-          $.get("{% url 'admin_get_stats' %}", {"id": student_id, "solution": {{solution.id}}})
-              .then(function (data) {
-                  $("#modal-title").html(data['name'])
-
-                  $("#modal-body").html("<h2>Requests</h2><table class='table table-striped table-hover' id='modal-table'></table>")
-                      .append("<h2>Requested By</h2><table class='table table-striped table-hover' id='modal-table-2'></table>")
-
-                  data['requests'].forEach(function (item) {
-                      $("#modal-table").append(`<tr><td>${item['name']}</td><td>${item['satisfied']}</td></tr>`)
-                  })
-
-                  data['requested_by'].forEach(function (item) {
-                      $("#modal-table-2").append(`<tr><td>${item['name']}</td><td>${item['satisfied']}</td></tr>`)
-                  })
-              })
-      }
-
-      function update_counts() {
-          $.get("{% url 'admin_reevaluate_solution' %}", {"solution": {{solution.id}}})
-              .then(function (data) {
-                  console.log(data);
-
-                  $("#explanation").html(data['explanation'])
-
-                  for (let student_id in data['student_scores']) {
-                      $("#counts-" + student_id).html("(" + data['student_scores'][student_id] + ")");
-
-                      if (data['student_scores'][student_id].startsWith("0")) {
-                          $("#stu-" + student_id).removeClass("badge-secondary").addClass("badge-danger");
-                      } else {
-                          $("#stu-" + student_id).removeClass("badge-danger").addClass("badge-secondary");
-                      }
-                  }
-              })
-      }
-
-      const sortable = new Draggable.Sortable(document.querySelectorAll('.students'), {
-          draggable: '.student',
-          mirror: {
-              appendTo: 'body',
-              constrainDimensions: true
-          }
-      });
-
-      sortable.on('sortable:stop', (evt) => {
-          if (evt.data.oldContainer.id != evt.data.newContainer.id) {
-              console.log(evt.data);
-              moveRoom(evt.data.dragEvent.data.originalSource.id, evt.data.newContainer.id);
-          } else {
-              // show_modal(evt.data.dragEvent.data.originalSource.id);
-          }
-      });
-
-      $(document).ready(function () {
-          update_counts();
-      });
-  </script>
+  <link rel="stylesheet" href="{% static 'app/solution_edit/workbench.css' %}">
 {% endblock %}
 
 {% block content-full %}
-  <div class="row canvas mx-4" id="canvas">
-    <div class="col-12">
-      <div class="jumbotron">
-        <h1>Edit Rooms List</h1>
-        <h4>{{ solution.name }}</h4>
-        {% if solution.strategy %}<h5>{{ solution.strategy }}</h5>{% endif %}
-        <p id="explanation">{{ solution.explanation | linebreaksbr }}</p>
-        {% if request.user.is_staff %}
-          <a class="btn btn-primary" href="{% url 'admin:app_solution_change' solution.id %}">Edit in DB</a>
-          <a class="btn btn-primary" onclick="update_counts()">Update Counts</a>
-        {% endif %}
-      </div>
-      <p class="text-center">
-        {% if sort == "placed_name" %}
-          <a href="?sort=canon">Sort by Canonical Name</a>
-        {% else %}
-          <a href="?sort=placed">Sort by Placed Name</a>
-        {% endif %}
-      </p>
+  <div class="toolbar" id="toolbar">
+    <div class="title">
+      <h1>Edit Rooms</h1>
+      <small>{{ solution.name }}{% if solution.strategy %} · {{ solution.strategy }}{% endif %}</small>
     </div>
-    {% for room in rooms %}
-      <div class="col-12 col-md-6 col-lg-4 col-xl-3">
-        <div class="room card mb-4" id="room-{{ room.id }}">
-          <div class="card-body">
-            <div class="room-label">
-              <h6 class="room-name">{{ room.internal_name }}</h6>
-              {% if room.placed_name %}
-                <h4 class="placed-name"
-                    onclick="renameRoom('{{ room.id }}', '{{ room.internal_name | escapejs }}')">{{ room.placed_name }}</h4>
-              {% else %}
-                <h4 class="placed-name"
-                    onclick="renameRoom('{{ room.id }}', '{{ room.internal_name | escapejs }}')">{{ room.internal_name }}</h4>
-              {% endif %}
-            </div>
-
-            <div class="students" id="students-{{ room.id }}">
-              {% for student in room.people.all %}
-                <div class="student badge badge-pill badge-secondary" id="stu-{{ student.id }}"
-                     onclick="show_modal('{{ student.id }}')">
-                  {{ student.name }} <span id="counts-{{ student.id }}" class="counts">(loading)</span>
-                </div>
-              {% endfor %}
-            </div>
-            <div>
-              <small>Capacity: {{ room.capacity }}</small>
-              {% if room.highest_affinity_neighbor %}
-                <br/>
-                <small>Best Neighbor: {{ room.highest_affinity_neighbor.internal_name }}</small>
-              {% endif %}
-            </div>
-          </div>
-        </div>
+    <div class="d-flex" id="stats"></div>
+    <div class="ml-auto d-flex align-items-center" style="gap:.5rem">
+      <span class="preview-bar" id="preview-bar"></span>
+      <span class="save-status" id="save-status"></span>
+      <input class="form-control form-control-sm" style="width:170px" id="search" placeholder="Find student…">
+      <select class="custom-select custom-select-sm" style="width:auto" id="sort">
+        <option value="internal">Sort: generated order</option>
+        <option value="placed">Sort: hotel room #</option>
+        <option value="happy">Sort: least happy first</option>
+      </select>
+      <div class="btn-group btn-group-sm">
+        <button class="btn btn-outline-secondary" id="undo" title="Undo (⌘Z)">Undo</button>
+        <button class="btn btn-outline-secondary" id="redo" title="Redo (⇧⌘Z)">Redo</button>
       </div>
-    {% endfor %}
-  </div>
-
-  <!-- Student Details Modal -->
-  <div class="modal" tabindex="-1" role="dialog" id="modal">
-    <div class="modal-dialog" role="document">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="modal-title">Modal title</h5>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
-        </div>
-        <div class="modal-body" id="modal-body">
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-        </div>
+      <button class="btn btn-sm btn-outline-secondary" data-toggle="collapse" data-target="#legend">Legend</button>
+      {% if request.user.is_staff %}
+        <a class="btn btn-sm btn-primary" href="{% url 'admin:app_solution_change' solution.id %}">Edit in DB</a>
+      {% endif %}
+    </div>
+    <div class="collapse w-100" id="legend">
+      <div class="legend d-flex flex-wrap pt-2" style="gap:1.25rem">
+        <span><span class="sw" style="border-color:#28a745"></span>request met</span>
+        <span><span class="sw" style="border-color:#f87575"></span>request not met</span>
+        <span><span class="sw dashed" style="border-color:#28a745"></span>dashed = they requested this student</span>
+        <span><span class="sw" style="border-color:#c3002f"></span>hard rule broken</span>
+        <span><span class="sw" style="border-color:#1d3461"></span>must-be-with satisfied</span>
+        <span class="ml-3">Each green dot on a student is one of their requests met.
+          Drag a student onto a room to move them, or onto another student to swap. <span class="kbd">Esc</span> cancels a drag.</span>
       </div>
     </div>
   </div>
 
-  <!-- Rename Room Modal -->
-  <div class="modal" tabindex="-1" role="dialog" id="rename-modal">
-    <div class="modal-dialog" role="document">
-      <div class="modal-content">
-        <form action="{% url 'admin_rename_room' %}" method="post">
-          <div class="modal-header">
-            <h5 class="modal-title" id="rename-modal-title">Modal title</h5>
-            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-              <span aria-hidden="true">&times;</span>
-            </button>
-          </div>
-          <div class="modal-body" id="rename-modal-body">
-            {% csrf_token %}
-            <input class="d-none" name="id" id="room-id">
-            <input class="form-control" name="new">
-          </div>
-          <div class="modal-footer">
-            <button type="submit" class="btn btn-success">Submit</button>
-            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-          </div>
-        </form>
-      </div>
-    </div>
+  <div class="wb">
+    <aside class="wb-left">
+      <div class="panel-h">Unplaced <span id="pool-count" class="badge badge-warning"></span></div>
+      <div class="pool" id="pool" data-drop data-room="pool"></div>
+
+      <div class="panel-h">Needs attention</div>
+      <ul class="attn" id="attn"></ul>
+
+      <div class="panel-h">Recent changes</div>
+      <ul class="log" id="log"></ul>
+    </aside>
+
+    <main class="wb-main" id="main">
+      <div class="rooms" id="rooms"></div>
+    </main>
+
+    <aside class="wb-right" id="inspector"></aside>
   </div>
+{% endblock %}
+
+{% block delayedscript %}
+  {{ payload|json_script:"solution-data" }}
+  <script src="{% static 'app/solution_edit/engine.js' %}"></script>
+  <script src="{% static 'app/solution_edit/threads.js' %}"></script>
+  <script src="{% static 'app/solution_edit/drag.js' %}"></script>
+  <script src="{% static 'app/solution_edit/ui.js' %}"></script>
+  <script>
+    Engine.init(JSON.parse(document.getElementById("solution-data").textContent), {
+      move: "{% url 'admin_move_student' %}",
+      swap: "{% url 'admin_swap_students' %}",
+      rename: "{% url 'admin_rename_room' %}",
+      reevaluate: "{% url 'admin_reevaluate_solution' %}",
+      csrf: "{{ csrf_token }}",
+    });
+  </script>
+  <script src="{% static 'app/solution_edit/workbench.js' %}"></script>
 {% endblock %}
