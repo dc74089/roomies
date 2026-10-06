@@ -27,7 +27,7 @@ def evaluate_solution_dict(soln: dict, gender):
         gq = Person.objects.filter(gender=gender)
 
     for person in gq:
-        num_reqs = person.requests.filter(manual=False).count()
+        num_reqs = person.requests.filter(manual=False, type="attract").count()
         num_failures = 0
         num_successes = 0
 

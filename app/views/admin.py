@@ -1,7 +1,6 @@
 import codecs
 import csv
 import random
-import traceback
 
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseBadRequest, HttpResponse, JsonResponse
@@ -9,8 +8,6 @@ from django.shortcuts import redirect, render
 from django.views.decorators.csrf import csrf_exempt
 
 from app.models import Person, request_types, Request, Solution, SiteConfig, Site, supported_genders, Room
-from app.utils import evaluate
-from app.utils.evaluate import evaluate_solution
 
 
 @login_required
