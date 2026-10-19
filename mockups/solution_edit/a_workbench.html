@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Mockup A · Workbench — Roomies</title>
+  <link rel="stylesheet" href="../../app/static/app/bootstrap.css">
+  <link rel="icon" href="../../app/static/app/favicon-nobg.svg">
+  <link rel="stylesheet" href="shared/ui.css">
+  <style>
+    .wb {
+      display: grid;
+      grid-template-columns: 260px 1fr 330px;
+      height: calc(100vh - var(--nav-h) - var(--chrome-h, 92px));
+    }
+
+    .wb > * { overflow-y: auto; }
+
+    .wb-left, .wb-right {
+      background: #fff;
+      border-right: 1px solid var(--line);
+      padding: .5rem;
+    }
+
+    .wb-right { border-right: 0; border-left: 1px solid var(--line); }
+
+    .wb-main { padding: 1rem; }
+
+    /* Room grid */
+    .rooms {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(215px, 1fr));
+      gap: .85rem;
+      align-items: start;
+    }
+
+    .room {
+      position: relative;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: .6rem;
+      transition: box-shadow .12s, border-color .12s, transform .12s;
+    }
+
+    .room-h {
+      display: flex;
+      align-items: flex-start;
+      padding: .55rem .7rem .35rem;
+      gap: .5rem;
+    }
+
+    .room-h .labels { flex: 1; min-width: 0; }
+
+    .placed-input {
+      border: 1px solid transparent;
+      border-radius: .3rem;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--navy);
+      width: 100%;
+      padding: 0 .25rem;
+      margin-left: -.25rem;
+      background: transparent;
+    }
+
+    .placed-input::placeholder { color: #c0c6d0; font-weight: 600; font-style: italic; }
+    .placed-input:hover { border-color: var(--line); }
+    .placed-input:focus { border-color: var(--periwinkle); outline: 0; background: #fff; }
+
+    .internal { font-size: .72rem; color: #6c757d; }
+
+    .beds { display: flex; gap: 2px; align-items: center; font-size: .72rem; color: #6c757d; white-space: nowrap; }
+    .bed { width: 9px; height: 14px; border-radius: 2px; background: #e4e7ee; }
+    .bed.full { background: var(--navy); }
+    .bed.over { background: var(--hard); }
+
+    .room-body { padding: 0 .55rem .3rem; min-height: 2.2rem; }
+
+    .room-f {
+      border-top: 1px solid var(--line);
+      padding: .35rem .7rem;
+      font-size: .72rem;
+      color: #6c757d;
+      display: flex;
+      justify-content: space-between;
+      gap: .5rem;
+    }
+
+    .room-f .link { color: var(--periwinkle); cursor: pointer; }
+    .room-f .link:hover { text-decoration: underline; }
+
+    .happy { display: inline-block; width: 46px; height: 5px; background: #eceef3; border-radius: 3px; vertical-align: middle; overflow: hidden; }
+    .happy > i { display: block; height: 100%; background: var(--ok); }
+
+    .room.overfull { border-color: var(--hard); }
+    .room.flash { box-shadow: 0 0 0 3px var(--periwinkle); }
+
+    /* While dragging */
+    .drop-delta {
+      display: none;
+      position: absolute;
+      top: -.6rem;
+      left: .6rem;
+      font-size: .75rem;
+      font-weight: 700;
+      padding: .05rem .45rem;
+      border-radius: 999px;
+      background: #fff;
+      border: 1px solid var(--line);
+      box-shadow: 0 1px 3px rgba(0,0,0,.08);
+    }
+
+    body.is-dragging .drop-delta { display: block; }
+    .drop-delta.good { color: #fff; background: var(--ok); border-color: var(--ok); }
+    .drop-delta.bad { color: #fff; background: var(--coral); border-color: var(--coral); }
+    .drop-delta.hard { color: #fff; background: var(--hard); border-color: var(--hard); }
+
+    body.is-dragging .room.best { border-color: var(--ok); box-shadow: 0 0 0 2px rgba(40,167,69,.35); }
+    body.is-dragging .room.hover { transform: scale(1.015); box-shadow: 0 0 0 3px var(--navy); }
+    body.is-dragging .room.hover.swap { box-shadow: 0 0 0 3px var(--periwinkle); }
+    .chip.swap-target { outline: 2px dashed var(--periwinkle); outline-offset: 2px; }
+
+    /* Pool */
+    .pool {
+      border: 2px dashed #e2c98f;
+      border-radius: .6rem;
+      background: #fffcf4;
+      padding: .5rem;
+      min-height: 84px;
+      margin: 0 .3rem .5rem;
+    }
+
+    .pool:empty::before, .pool .empty {
+      display: block;
+      text-align: center;
+      font-size: .75rem;
+      color: #b49856;
+      padding: .9rem .25rem;
+    }
+
+    body.is-dragging .pool.hover { background: #fff3d6; border-color: #d9a73c; }
+
+    .attn { list-style: none; padding: 0 .3rem; margin: 0 0 .5rem; font-size: .82rem; }
+    .attn li { padding: .3rem .4rem; border-radius: .3rem; cursor: pointer; display: flex; gap: .4rem; }
+    .attn li:hover { background: var(--canvas); }
+    .attn .tag { font-size: .65rem; font-weight: 700; text-transform: uppercase; padding: .05rem .35rem; border-radius: 3px; white-space: nowrap; align-self: center; }
+    .tag.zero { background: #ffe1e1; color: #b33a3a; }
+    .tag.hard { background: var(--hard); color: #fff; }
+    .tag.cap { background: #ffe8cc; color: #a35400; }
+    .tag.place { background: #ecebff; color: #4b4ac2; }
+    .tag.repel { background: #fff0e0; color: #b45a00; }
+
+    .log { list-style: none; padding: 0 .4rem; font-size: .75rem; color: #6c757d; }
+    .log li { padding: .15rem 0; border-bottom: 1px dotted var(--line); }
+
+    /* Inspector */
+    .insp-empty { color: #8a93a3; font-size: .85rem; text-align: center; padding: 2.5rem 1rem; }
+    .insp-name { font-size: 1.25rem; font-weight: 700; color: var(--navy); margin: 0; }
+    .insp-sub { font-size: .8rem; color: #6c757d; }
+    .rel { list-style: none; padding: 0; margin: 0 0 .5rem; font-size: .85rem; }
+    .rel li { display: flex; gap: .45rem; align-items: center; padding: .25rem .3rem; border-radius: .3rem; cursor: pointer; }
+    .rel li:hover { background: var(--canvas); }
+    .rel .ok { color: var(--ok); font-weight: 700; width: 1rem; text-align: center; }
+    .rel .no { color: var(--coral); font-weight: 700; width: 1rem; text-align: center; }
+    .rel .na { color: #adb5bd; width: 1rem; text-align: center; }
+    .rel .where { margin-left: auto; font-size: .72rem; color: #6c757d; white-space: nowrap; }
+    .rel .kind { font-size: .62rem; text-transform: uppercase; font-weight: 700; padding: 0 .3rem; border-radius: 3px; }
+    .kind.forbid { background: var(--hard); color: #fff; }
+    .kind.require { background: var(--navy); color: #fff; }
+    .kind.repel { background: #ffe8cc; color: #a35400; }
+
+    .sugg { list-style: none; padding: 0; margin: 0; font-size: .82rem; }
+    .sugg li { display: flex; align-items: center; gap: .5rem; padding: .35rem .3rem; border-bottom: 1px solid var(--line); }
+    .sugg .what { flex: 1; min-width: 0; }
+    .sugg .what small { display: block; color: #6c757d; }
+    .sugg .btn { font-size: .72rem; padding: .1rem .5rem; }
+
+    .preview-bar {
+      font-size: .8rem;
+      color: var(--navy);
+      background: #ecebff;
+      border-radius: 999px;
+      padding: .2rem .75rem;
+      display: none;
+    }
+
+    body.is-dragging .preview-bar { display: inline-block; }
+  </style>
+</head>
+<body>
+<div class="mock-banner">Mockup A · dummy data · edits persist in this browser only (shared with mockups B and C)</div>
+
+<div class="toolbar" id="toolbar">
+  <div class="title">
+    <h1>Edit Rooms</h1>
+    <small id="soln-name"></small>
+  </div>
+  <div class="d-flex" id="stats"></div>
+  <div class="ml-auto d-flex align-items-center" style="gap:.5rem">
+    <span class="preview-bar" id="preview-bar"></span>
+    <input class="form-control form-control-sm" style="width:170px" id="search" placeholder="Find student…">
+    <select class="custom-select custom-select-sm" style="width:auto" id="sort">
+      <option value="internal">Sort: generated order</option>
+      <option value="placed">Sort: hotel room #</option>
+      <option value="happy">Sort: least happy first</option>
+    </select>
+    <div class="btn-group btn-group-sm">
+      <button class="btn btn-outline-secondary" id="undo" title="Undo (⌘Z)">Undo</button>
+      <button class="btn btn-outline-secondary" id="redo" title="Redo (⇧⌘Z)">Redo</button>
+    </div>
+    <button class="btn btn-sm btn-outline-secondary" data-toggle="collapse" data-target="#legend">Legend</button>
+  </div>
+  <div class="collapse w-100" id="legend">
+    <div class="legend d-flex flex-wrap pt-2" style="gap:1.25rem">
+      <span><span class="sw" style="border-color:#28a745"></span>request met</span>
+      <span><span class="sw" style="border-color:#f87575"></span>request not met</span>
+      <span><span class="sw dashed" style="border-color:#28a745"></span>dashed = they requested this student</span>
+      <span><span class="sw" style="border-color:#c3002f"></span>hard rule broken</span>
+      <span><span class="sw" style="border-color:#1d3461"></span>must-be-with satisfied</span>
+      <span><span class="sw dotted" style="border-color:#fd7e14"></span>"not with" request broken</span>
+      <span class="ml-3">Chips: <span class="pip on d-inline-block" style="width:7px;height:7px;border-radius:50%;background:#28a745"></span> = one of their requests met.
+        Drag a student onto a room to move, onto another student to swap. <span class="kbd">Esc</span> cancels a drag.</span>
+    </div>
+  </div>
+</div>
+
+<div class="wb">
+  <aside class="wb-left">
+    <div class="panel-h">Unplaced <span id="pool-count" class="badge badge-warning"></span></div>
+    <div class="pool" id="pool" data-drop data-room="pool"></div>
+
+    <div class="panel-h">Needs attention</div>
+    <ul class="attn" id="attn"></ul>
+
+    <div class="panel-h">Recent changes</div>
+    <ul class="log" id="log"></ul>
+  </aside>
+
+  <main class="wb-main" id="main">
+    <div class="rooms" id="rooms"></div>
+  </main>
+
+  <aside class="wb-right" id="inspector"></aside>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"></script>
+<script src="shared/data.js"></script>
+<script src="shared/engine.js"></script>
+<script src="shared/threads.js"></script>
+<script src="shared/drag.js"></script>
+<script src="shared/ui.js"></script>
+<script>
+  UI.navbar("a_workbench.html");
+
+  const $ = s => document.querySelector(s);
+  const $$ = s => [...document.querySelectorAll(s)];
+  let selected = null;
+  let dragCtx = null;
+
+  $("#soln-name").textContent = `${Engine.solution.name} · ${Engine.solution.strategy}`;
+
+  function syncChromeHeight() {
+    const h = $(".mock-banner").offsetHeight + $("#toolbar").offsetHeight;
+    document.documentElement.style.setProperty("--chrome-h", h + "px");
+  }
+  jQuery("#legend").on("shown.bs.collapse hidden.bs.collapse", syncChromeHeight);
+  window.addEventListener("resize", syncChromeHeight);
+
+  // ---- Derived room info ----------------------------------------------------
+
+  function roomHappiness(r, inv) {
+    let met = 0, total = 0;
+    r.people.forEach(pid => {
+      const d = Engine.studentDetail(pid, inv);
+      met += d.wantsMet; total += d.wantsTotal;
+    });
+    return {met, total, pct: total ? met / total : 1};
+  }
+
+  function strongestNeighbor(r) {
+    let best = null, score = 0;
+    Engine.state.rooms.forEach(o => {
+      if (o === r) return;
+      const a = Engine.affinity(r, o);
+      if (a > score) { best = o; score = a; }
+    });
+    return best ? {room: best, score} : null;
+  }
+
+  // ---- Render ---------------------------------------------------------------
+
+  function render() {
+    const inv = Engine.assignment();
+    const s = Engine.summary();
+
+    // Stats
+    const pct = s.total ? Math.round(100 * s.granted / s.total) : 0;
+    $("#stats").innerHTML = `
+      <div class="stat" id="st-granted"><span class="v">${s.granted}/${s.total} <small class="text-muted">${pct}%</small><span class="pd"></span></span><span class="k">Requests granted</span></div>
+      <div class="stat ${s.zeroGranted.length ? "bad" : "good"}" id="st-zero"><span class="v">${s.zeroGranted.length}<span class="pd"></span></span><span class="k">Got none</span></div>
+      <div class="stat ${s.violations.length ? "bad" : "good"}" id="st-hard"><span class="v">${s.violations.length}<span class="pd"></span></span><span class="k">Hard rules broken</span></div>
+      <div class="stat ${s.overfull.length ? "bad" : ""}"><span class="v">${s.openBeds}</span><span class="k">Open beds</span></div>
+      <div class="stat"><span class="v">${s.score.toFixed(2)}<span class="pd"></span></span><span class="k">Score (lower = better)</span></div>`;
+
+    // Rooms
+    const sort = $("#sort").value;
+    const rooms = [...Engine.state.rooms];
+    if (sort === "placed") rooms.sort((a, b) => (a.placed_name || "zzz").localeCompare(b.placed_name || "zzz", undefined, {numeric: true}));
+    if (sort === "happy") rooms.sort((a, b) => roomHappiness(a, inv).pct - roomHappiness(b, inv).pct);
+
+    $("#rooms").innerHTML = rooms.map(r => {
+      const h = roomHappiness(r, inv);
+      const nb = strongestNeighbor(r);
+      let beds = "";
+      for (let i = 0; i < Math.max(r.capacity, r.people.length); i++) {
+        beds += `<span class="bed ${i >= r.capacity ? "over" : i < r.people.length ? "full" : ""}"></span>`;
+      }
+      return `<div class="room ${r.people.length > r.capacity ? "overfull" : ""}" data-drop data-room="${r.id}" id="room-${r.id}">
+        <span class="drop-delta"></span>
+        <div class="room-h">
+          <div class="labels">
+            <input class="placed-input" data-nodrag data-rename="${r.id}" value="${UI.esc(r.placed_name || "")}" placeholder="Hotel room #">
+            <div class="internal">${UI.esc(r.internal_name)}</div>
+          </div>
+          <div class="beds" title="${r.people.length} of ${r.capacity} beds">${beds}</div>
+        </div>
+        <div class="room-body">${r.people.map(pid => UI.chip(pid, inv)).join("")}</div>
+        <div class="room-f">
+          <span title="${h.met} of ${h.total} requests from this room are met inside it">
+            <span class="happy"><i style="width:${Math.round(h.pct * 100)}%"></i></span> ${h.met}/${h.total}
+          </span>
+          ${nb ? `<span class="link" data-flash="${nb.room.id}" title="Most cross-requests with this room — good candidate for a connecting door">⇄ ${UI.esc(Engine.roomLabel(nb.room))} (${nb.score})</span>` : ""}
+        </div>
+      </div>`;
+    }).join("");
+
+    // Pool
+    $("#pool").innerHTML = Engine.state.unplaced.length
+      ? Engine.state.unplaced.map(pid => UI.chip(pid, inv)).join("")
+      : `<span class="empty">Drag students here to set them aside while you rearrange</span>`;
+    $("#pool-count").textContent = Engine.state.unplaced.length || "";
+
+    renderAttention(s, inv);
+    $("#log").innerHTML = Engine.state.log.slice(0, 12).map(l => `<li>${UI.esc(l.label)}</li>`).join("")
+      || `<li class="text-muted">No edits yet</li>`;
+
+    $("#undo").disabled = !Engine.canUndo();
+    $("#redo").disabled = !Engine.canRedo();
+
+    renderInspector();
+    applySearch();
+    syncChromeHeight();
+  }
+
+  function renderAttention(s, inv) {
+    const items = [];
+    s.violations.forEach(v => items.push(`<li data-select="${v.requestor}"><span class="tag hard">Rule</span>
+      ${UI.esc(Engine.peopleById[v.requestor].name)} ${v.type === "forbid" ? "must not be with" : "must be with"} ${UI.esc(Engine.peopleById[v.requestee].name)}</li>`));
+    s.overfull.forEach(r => items.push(`<li data-flash="${r.id}"><span class="tag cap">Over</span>${UI.esc(Engine.roomLabel(r))} has ${r.people.length}/${r.capacity}</li>`));
+    s.zeroGranted.forEach(pid => items.push(`<li data-select="${pid}"><span class="tag zero">0 met</span>${UI.esc(Engine.peopleById[pid].name)} <span class="text-muted ml-auto">none granted</span></li>`));
+    s.repelBroken.forEach(v => items.push(`<li data-select="${v.requestor}"><span class="tag repel">Not with</span>
+      ${UI.esc(Engine.peopleById[v.requestor].name)} is with ${UI.esc(Engine.peopleById[v.requestee].name)}</li>`));
+    const unplacedRooms = Engine.state.rooms.filter(r => !r.placed_name).length;
+    if (unplacedRooms) items.push(`<li onclick="location.href='b_hotel.html'"><span class="tag place">Hotel</span>${unplacedRooms} rooms not yet placed →</li>`);
+    $("#attn").innerHTML = items.join("") || `<li class="text-success">Everything looks good ✓</li>`;
+  }
+
+  function where(pid, inv) {
+    const rid = inv[pid];
+    return rid === undefined ? "unplaced" : Engine.roomLabel(Engine.room(rid));
+  }
+
+  function renderInspector() {
+    const el = $("#inspector");
+    $$(".chip.selected, .chip.related").forEach(c => c.classList.remove("selected", "related"));
+    if (!selected) {
+      el.innerHTML = `<div class="insp-empty">Click a student to see their requests, where those people are, and the best moves for them.<br><br>
+        Hover a student to see their threads.</div>`;
+      return;
+    }
+    const inv = Engine.assignment();
+    const d = Engine.studentDetail(selected, inv);
+    const status = Engine.studentStatus(selected, inv);
+    $$(`.chip[data-pid="${selected}"]`).forEach(c => c.classList.add("selected"));
+    d.links.forEach(l => $$(`.chip[data-pid="${l.otherId}"]`).forEach(c => c.classList.add("related")));
+
+    const mark = l => l.satisfied === null ? `<span class="na">·</span>` : l.satisfied ? `<span class="ok">✓</span>` : `<span class="no">✗</span>`;
+    const kind = l => l.type === "attract" ? "" : `<span class="kind ${l.type}">${{repel: "not with", forbid: "never", require: "must"}[l.type]}</span>`;
+    const row = l => `<li data-select="${l.otherId}">${mark(l)}<span>${UI.esc(l.other.name)}</span>${kind(l)}<span class="where">${UI.esc(where(l.otherId, inv))}</span></li>`;
+    const out = d.links.filter(l => l.dir === "out"), inc = d.links.filter(l => l.dir === "in");
+
+    el.innerHTML = `
+      <div class="p-2">
+        <div class="d-flex align-items-start">
+          <div class="flex-fill">
+            <p class="insp-name">${UI.esc(d.person.name)}</p>
+            <div class="insp-sub">${UI.STATUS_TEXT[status]} · in <b>${UI.esc(where(selected, inv))}</b></div>
+          </div>
+          <button class="close" data-deselect>&times;</button>
+        </div>
+      </div>
+      <div class="panel-h">Requested (${d.wantsMet}/${d.wantsTotal} met)</div>
+      <ul class="rel px-1">${out.map(row).join("") || `<li class="text-muted">No requests submitted</li>`}</ul>
+      <div class="panel-h">Requested by (${d.wantedByMet}/${d.wantedByTotal} met)</div>
+      <ul class="rel px-1">${inc.map(row).join("") || `<li class="text-muted">Nobody</li>`}</ul>
+      <div class="panel-h">Best moves <small class="text-muted text-normal">computed live</small></div>
+      <ul class="sugg px-2" id="sugg"><li class="text-muted">Calculating…</li></ul>
+      <div class="p-2">
+        <button class="btn btn-sm btn-outline-warning btn-block" data-unplace="${selected}">Set aside in Unplaced</button>
+      </div>`;
+
+    // Suggestions: best single moves + best swaps, ranked by score change
+    requestAnimationFrame(() => {
+      const opts = [];
+      const from = inv[selected];
+      Engine.state.rooms.forEach(r => {
+        if (r.id === from) return;
+        const p = Engine.preview(selected, r.id);
+        opts.push({kind: "move", room: r, p, full: r.people.length >= r.capacity});
+        if (from !== undefined) {
+          r.people.forEach(other => {
+            opts.push({kind: "swap", room: r, other, p: Engine.preview(selected, r.id, other)});
+          });
+        }
+      });
+      const ranked = opts
+        .filter(o => !(o.kind === "move" && o.full)) // keep capacity sane
+        .sort((a, b) => a.p.deltaScore - b.p.deltaScore)
+        .slice(0, 5);
+      $("#sugg").innerHTML = ranked.map(o => {
+        const g = o.p.deltaGranted, z = o.p.deltaZero, h = o.p.deltaViolations;
+        const bits = [];
+        if (g) bits.push(`${g > 0 ? "+" : ""}${g} granted`);
+        if (z) bits.push(`${z < 0 ? "fixes " + -z : "+" + z} with none`);
+        if (h) bits.push(`<b class="text-danger">${h > 0 ? "breaks" : "fixes"} hard rule</b>`);
+        const better = o.p.deltaScore < -1e-9;
+        const label = o.kind === "move"
+          ? `Move to <b>${UI.esc(Engine.roomLabel(o.room))}</b>`
+          : `Swap with <b>${UI.esc(Engine.peopleById[o.other].name)}</b> <span class="text-muted">(${UI.esc(Engine.roomLabel(o.room))})</span>`;
+        const data = o.kind === "move" ? `data-move="${o.room.id}"` : `data-swap="${o.other}"`;
+        return `<li><div class="what">${label}<small>${bits.join(" · ") || "no change"}</small></div>
+          <button class="btn ${better ? "btn-success" : "btn-outline-secondary"}" ${data}>${o.kind === "move" ? "Move" : "Swap"}</button></li>`;
+      }).join("") || `<li class="text-muted">No moves available</li>`;
+      if (ranked.length && ranked[0].p.deltaScore >= -1e-9) {
+        $("#sugg").insertAdjacentHTML("afterbegin", `<li class="text-muted small d-block">Already in the best spot a single move can find.</li>`);
+      }
+    });
+  }
+
+  function applySearch() {
+    const q = $("#search").value.trim().toLowerCase();
+    $$(".chip").forEach(c => {
+      const hit = q && c.querySelector(".name").textContent.toLowerCase().includes(q);
+      c.classList.toggle("search-hit", !!hit);
+      c.classList.toggle("dim", !!q && !hit);
+    });
+  }
+
+  // ---- Threads on hover -------------------------------------------------------
+
+  function linksFor(pid, inv, excludeEl) {
+    const d = Engine.studentDetail(pid, inv);
+    return d.links.map(l => ({
+      el: [...document.querySelectorAll(`.room .chip[data-pid="${l.otherId}"], .pool .chip[data-pid="${l.otherId}"]`)]
+        .find(e => e !== excludeEl && !e.classList.contains("drag-ghost")),
+      type: l.type, dir: l.dir, satisfied: l.satisfied, name: l.other.name,
+    }));
+  }
+
+  document.addEventListener("mouseover", e => {
+    if (document.body.classList.contains("is-dragging")) return;
+    const c = e.target.closest(".chip");
+    if (!c || c.classList.contains("drag-ghost")) return;
+    const r = c.getBoundingClientRect();
+    Threads.draw({x: r.left + r.width / 2, y: r.top + r.height / 2}, linksFor(c.dataset.pid, Engine.assignment(), c));
+  });
+  document.addEventListener("mouseout", e => {
+    if (document.body.classList.contains("is-dragging")) return;
+    if (e.target.closest(".chip") && !(e.relatedTarget && e.relatedTarget.closest(".chip") === e.target.closest(".chip"))) Threads.clear();
+  });
+  $("#main").addEventListener("scroll", () => { if (!dragCtx) Threads.clear(); }, {passive: true});
+
+  // ---- Drag & drop ------------------------------------------------------------
+
+  Drag.attach({
+    root: document.body,
+    item: ".room .chip, .pool .chip",
+    drop: "[data-drop]",
+    scroller: $("#main"),
+    onStart(itemEl) {
+      const pid = itemEl.dataset.pid;
+      const from = Engine.assignment()[pid];
+      // Precompute the delta for every possible destination once per drag
+      const deltas = {};
+      Engine.state.rooms.forEach(r => { if (r.id !== from) deltas[r.id] = Engine.preview(pid, r.id); });
+      const order = Object.entries(deltas).sort((a, b) => a[1].deltaScore - b[1].deltaScore);
+      const best = order.filter(([, p]) => p.deltaScore < -1e-9).slice(0, 2).map(([id]) => Number(id));
+
+      $$(".room").forEach(el => {
+        const id = Number(el.dataset.room);
+        const tag = el.querySelector(".drop-delta");
+        el.classList.toggle("best", best.includes(id));
+        if (id === from) { tag.textContent = "current"; tag.className = "drop-delta"; return; }
+        const p = deltas[id];
+        if (p.deltaViolations > 0) { tag.textContent = "⚠ hard rule"; tag.className = "drop-delta hard"; return; }
+        const g = p.deltaGranted;
+        tag.textContent = g ? `${g > 0 ? "+" : ""}${g} granted` : (p.deltaScore < -1e-9 ? "better" : "±0");
+        tag.className = "drop-delta " + (p.deltaScore < -1e-9 ? "good" : p.deltaScore > 1e-9 ? "bad" : "");
+      });
+      dragCtx = {pid, from, deltas};
+      if (selected !== pid) { selected = pid; renderInspector(); }
+    },
+    onMove({x, y, itemEl, dropEl, overItemEl}) {
+      const {pid, from} = dragCtx;
+      $$(".room.hover, .pool.hover").forEach(e => e.classList.remove("hover", "swap"));
+      $$(".chip.swap-target").forEach(e => e.classList.remove("swap-target"));
+
+      let target = null, swapWith = null;
+      if (dropEl) {
+        target = dropEl.dataset.room === "pool" ? null : Number(dropEl.dataset.room);
+        dropEl.classList.add("hover");
+        const overPid = overItemEl && overItemEl.dataset.pid;
+        if (overPid && target !== null && target !== from && from !== undefined) {
+          swapWith = overPid;
+          overItemEl.classList.add("swap-target");
+          dropEl.classList.add("swap");
+        }
+      }
+
+      // Threads reflect the hypothetical placement
+      let inv = Engine.assignment();
+      let label = "";
+      if (dropEl && (target !== from || dropEl.dataset.room === "pool")) {
+        const p = Engine.preview(pid, target, swapWith);
+        inv = {...inv};
+        delete inv[pid];
+        if (target !== null) inv[pid] = target;
+        if (swapWith) inv[swapWith] = from;
+        const name = Engine.peopleById[pid].name;
+        const dest = target === null ? "Unplaced" : Engine.roomLabel(Engine.room(target));
+        label = swapWith
+          ? `Swap ${name} ⇄ ${Engine.peopleById[swapWith].name}`
+          : `Move ${name} → ${dest}`;
+        label += ` · granted ${p.deltaGranted >= 0 ? "+" : ""}${p.deltaGranted}`;
+        if (p.deltaZero) label += ` · got-none ${p.deltaZero > 0 ? "+" : ""}${p.deltaZero}`;
+        if (p.deltaViolations > 0) label += " · ⚠ breaks hard rule";
+        setStatDeltas(p);
+      } else {
+        setStatDeltas(null);
+      }
+      $("#preview-bar").textContent = label || "Drop on a room to move, on a student to swap";
+      Threads.draw({x, y}, linksFor(pid, inv, itemEl));
+    },
+    onDrop({itemEl, dropEl, overItemEl}) {
+      const {pid, from} = dragCtx;
+      if (!dropEl) return;
+      const target = dropEl.dataset.room === "pool" ? null : Number(dropEl.dataset.room);
+      const overPid = overItemEl && overItemEl.dataset.pid;
+      const before = Engine.summary();
+      if (overPid && target !== null && target !== from && from !== undefined) {
+        Engine.swap(pid, overPid);
+      } else {
+        Engine.move(pid, target);
+      }
+      const after = Engine.summary();
+      if (Engine.state.log[0]) {
+        const g = after.granted - before.granted;
+        UI.toast(`${Engine.state.log[0].label}${g ? ` (${g > 0 ? "+" : ""}${g} granted)` : ""}`);
+      }
+    },
+    onEnd() {
+      dragCtx = null;
+      Threads.clear();
+      setStatDeltas(null);
+      $$(".room.hover, .room.best, .pool.hover").forEach(e => e.classList.remove("hover", "best", "swap"));
+      $$(".chip.swap-target").forEach(e => e.classList.remove("swap-target"));
+    },
+    onClick(itemEl) {
+      selected = selected === itemEl.dataset.pid ? null : itemEl.dataset.pid;
+      renderInspector();
+    },
+  });
+
+  function setStatDeltas(p) {
+    const set = (id, html) => { const el = document.querySelector(`#${id} .pd`); if (el) el.innerHTML = html; };
+    set("st-granted", p ? UI.fmtDelta(p.deltaGranted) : "");
+    set("st-zero", p ? UI.fmtDelta(p.deltaZero, 0, true) : "");
+    set("st-hard", p ? UI.fmtDelta(p.deltaViolations, 0, true) : "");
+  }
+
+  // ---- Other interactions -------------------------------------------------------
+
+  document.addEventListener("click", e => {
+    const t = e.target;
+    const sel = t.closest("[data-select]");
+    if (sel) { selected = sel.dataset.select; renderInspector(); scrollToStudent(selected); return; }
+    const fl = t.closest("[data-flash]");
+    if (fl) { flashRoom(fl.dataset.flash); return; }
+    if (t.closest("[data-deselect]")) { selected = null; renderInspector(); return; }
+    if (t.dataset.move) { Engine.move(selected, Number(t.dataset.move)); UI.toast(Engine.state.log[0].label); return; }
+    if (t.dataset.swap) { Engine.swap(selected, t.dataset.swap); UI.toast(Engine.state.log[0].label); return; }
+    if (t.dataset.unplace) { Engine.move(t.dataset.unplace, null); UI.toast(Engine.state.log[0].label); }
+  });
+
+  function scrollToStudent(pid) {
+    const c = document.querySelector(`.room .chip[data-pid="${pid}"]`);
+    if (c) c.scrollIntoView({block: "center", behavior: "smooth"});
+  }
+
+  function flashRoom(id) {
+    const el = $(`#room-${id}`);
+    if (!el) return;
+    el.scrollIntoView({block: "center", behavior: "smooth"});
+    el.classList.add("flash");
+    setTimeout(() => el.classList.remove("flash"), 1200);
+  }
+
+  document.addEventListener("keydown", e => {
+    if (e.target.dataset && e.target.dataset.rename && e.key === "Enter") e.target.blur();
+    if (e.key === "Escape" && !dragCtx && selected) { selected = null; renderInspector(); }
+  });
+  document.addEventListener("change", e => {
+    if (e.target.dataset.rename) {
+      Engine.rename(Number(e.target.dataset.rename), e.target.value);
+      UI.toast(Engine.state.log[0].label);
+    }
+  });
+
+  $("#search").addEventListener("input", applySearch);
+  $("#sort").addEventListener("change", render);
+  $("#undo").addEventListener("click", () => Engine.undo());
+  $("#redo").addEventListener("click", () => Engine.redo());
+
+  Engine.onChange(render);
+  render();
+</script>
+</body>
+</html>

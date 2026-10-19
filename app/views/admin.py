@@ -3,8 +3,10 @@ import csv
 import random
 
 from django.contrib.auth.decorators import login_required
+from django.db import transaction
+from django.db.models import Q
 from django.http import HttpResponseBadRequest, HttpResponse, JsonResponse
-from django.shortcuts import redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.csrf import csrf_exempt
 
 from app.models import Person, request_types, Request, Solution, SiteConfig, Site, supported_genders, Room
@@ -175,74 +177,114 @@ def graph_vis(request):
 
 @login_required
 def view_edit_solution(request, id):
-    solution = Solution.objects.get(id=id)
+    solution = get_object_or_404(Solution, id=id)
+    rooms = solution.rooms.prefetch_related('people').order_by('internal_name')
 
-    sort = "placed_name" if request.GET.get("sort", "") == "placed" else "internal_name"
+    placed_ids = {p.id for room in rooms for p in room.people.all()}
+    people = Person.objects.filter(Q(gender=solution.gender) | Q(id__in=placed_ids)).order_by('name')
+    people_ids = {p.id for p in people}
+
+    payload = {
+        "solution": {
+            "id": solution.id,
+            "name": solution.name,
+            "strategy": solution.strategy,
+            "gender": solution.gender,
+            "score": solution.score,
+        },
+        "rooms": [{
+            "id": room.id,
+            "internal_name": room.internal_name,
+            "placed_name": room.placed_name or "",
+            "capacity": room.capacity,
+            "people": [p.id for p in room.people.all()],
+        } for room in rooms],
+        "unplaced": [p.id for p in people if p.id not in placed_ids],
+        "people": [{"id": p.id, "name": p.name, "gender": p.gender} for p in people],
+        "requests": [{
+            "requestor": r.requestor_id,
+            "requestee": r.requestee_id,
+            "type": r.type,
+            "manual": r.manual,
+        } for r in Request.objects.filter(requestor_id__in=people_ids, requestee_id__in=people_ids)],
+    }
 
     return render(request, 'app/admin_solution_edit_new.html', {
         "solution": solution,
-        "rooms": solution.rooms.all().order_by(sort),
-        "sort": sort
+        "payload": payload,
     })
 
 
 @login_required
-@csrf_exempt
 def move_student_in_solution(request):
-    # print(dict(request.POST))
-    if request.user.is_authenticated and request.method == "POST":
-        data = request.POST
+    data = request.POST
 
-        if 'solution' in data and 'person' in data and 'to' in data:
-            soln = Solution.objects.get(id=data['solution'])
-            student = Person.objects.get(id=data['person'])
+    if request.method != "POST" or not all(k in data for k in ('solution', 'person', 'to')):
+        return HttpResponseBadRequest()
 
-            for room in soln.rooms.all():
-                if student.id in room.person_ids():
-                    room.people.remove(student)
-                    room.save()
+    soln = get_object_or_404(Solution, id=data['solution'])
+    student = get_object_or_404(Person, id=data['person'])
 
-            soln.rooms.get(id=data['to']).people.add(student)
-            soln.save()
+    with transaction.atomic():
+        for room in soln.rooms.filter(people=student):
+            room.people.remove(student)
 
-            return HttpResponse(status=200)
+        # An empty "to" leaves the student unplaced
+        if data['to']:
+            get_object_or_404(soln.rooms, id=data['to']).people.add(student)
 
-    return HttpResponseBadRequest()
+    return JsonResponse({"ok": True})
 
 
+@login_required
+def swap_students_in_solution(request):
+    data = request.POST
+
+    if request.method != "POST" or not all(k in data for k in ('solution', 'a', 'b')):
+        return HttpResponseBadRequest()
+
+    soln = get_object_or_404(Solution, id=data['solution'])
+    a = get_object_or_404(Person, id=data['a'])
+    b = get_object_or_404(Person, id=data['b'])
+
+    with transaction.atomic():
+        room_a = soln.rooms.filter(people=a).first()
+        room_b = soln.rooms.filter(people=b).first()
+
+        if room_a is None or room_b is None or room_a == room_b:
+            return HttpResponseBadRequest()
+
+        room_a.people.remove(a)
+        room_b.people.remove(b)
+        room_a.people.add(b)
+        room_b.people.add(a)
+
+    return JsonResponse({"ok": True})
+
+
+@login_required
 def reevaluate_solution(request):
-    solution = Solution.objects.get(id=request.GET.get("solution"))
+    solution = get_object_or_404(Solution, id=request.GET.get("solution"))
     solution.reevaluate_score()
-    solution.refresh_from_db()
-
-    student_scores = {}
-
-    for room in solution.rooms.all():
-        for student in room.person_ids():
-            requested_ids = Request.objects.filter(requestor_id=student, manual=False).values_list("requestee_id", flat=True)
-            requestor_ids = Request.objects.filter(requestee_id=student, manual=False).values_list("requestor_id", flat=True)
-            current_room_requests = len(set(room.person_ids()) & set(requested_ids))
-            current_room_requesteds = len(set(room.person_ids()) & set(requestor_ids))
-
-            student_scores[student] = f"{current_room_requests}|{current_room_requesteds}"
 
     return JsonResponse({
         "score": solution.score,
         "explanation": solution.explanation.replace("\n", "<br>"),
-        "student_scores": student_scores
     })
 
 
+@login_required
 def rename_room_in_solution(request):
-    if request.user.is_authenticated and request.method == "POST":
-        data = request.POST
+    data = request.POST
 
-        if 'id' in data and 'new' in data:
-            room = Room.objects.get(id=data['id'])
-            room.placed_name = data['new']
-            room.save()
+    if request.method != "POST" or 'id' not in data or 'new' not in data:
+        return HttpResponseBadRequest()
 
-            return redirect('admin_edit_solution', id=room.solution.id)
+    room = get_object_or_404(Room, id=data['id'])
+    room.placed_name = data['new'].strip()
+    room.save()
+
+    return JsonResponse({"ok": True, "placed_name": room.placed_name})
 
 
 @login_required

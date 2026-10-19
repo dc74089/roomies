@@ -26,6 +26,7 @@ urlpatterns = [
 
     path('admin/editsolution/<int:id>', admin.view_edit_solution, name="admin_edit_solution"),
     path('admin/editsolution/movestudent', admin.move_student_in_solution, name="admin_move_student"),
+    path('admin/editsolution/swapstudents', admin.swap_students_in_solution, name="admin_swap_students"),
     path('admin/editsolution/renameroom', admin.rename_room_in_solution, name="admin_rename_room"),
     path('admin/editsolution/getstats', admin.get_stats_for_student, name="admin_get_stats"),
     path('admin/editsolution/reevaluate', admin.reevaluate_solution, name="admin_reevaluate_solution"),
