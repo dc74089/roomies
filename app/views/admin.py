@@ -7,6 +7,7 @@ from django.db import transaction
 from django.db.models import Q
 from django.http import HttpResponseBadRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils.text import slugify
 from django.views.decorators.csrf import csrf_exempt
 
 from app.models import Person, request_types, Request, Solution, SiteConfig, Site, supported_genders, Room
@@ -213,6 +214,29 @@ def view_edit_solution(request, id):
         "solution": solution,
         "payload": payload,
     })
+
+
+@login_required
+def export_solution_csv(request, id):
+    solution = get_object_or_404(Solution, id=id)
+    rooms = solution.rooms.prefetch_related('people')
+
+    room_of = {p.id: room for room in rooms for p in room.people.all()}
+    people = Person.objects.filter(Q(gender=solution.gender) | Q(id__in=room_of.keys())).order_by('name')
+
+    filename = f"{slugify(solution.name) or 'solution'}-rooms.csv"
+    response = HttpResponse(content_type="text/csv; charset=utf-8")
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    response.write('\ufeff')  # BOM so Excel reads accented names correctly
+
+    writer = csv.writer(response)
+    writer.writerow(["Name", "Room", "Group"])
+    for p in people:
+        room = room_of.get(p.id)
+        # Unplaced students are listed with blank room/group so nobody goes missing
+        writer.writerow([p.name, (room.placed_name or "") if room else "", room.internal_name if room else ""])
+
+    return response
 
 
 @login_required

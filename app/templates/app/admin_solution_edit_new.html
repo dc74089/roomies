@@ -28,6 +28,7 @@
         <button class="btn btn-outline-secondary" id="redo" title="Redo (⇧⌘Z)">Redo</button>
       </div>
       <button class="btn btn-sm btn-outline-secondary" data-toggle="collapse" data-target="#legend">Legend</button>
+      <a class="btn btn-sm btn-outline-secondary" id="export" href="{% url 'admin_export_solution' solution.id %}">Export CSV</a>
       {% if request.user.is_staff %}
         <a class="btn btn-sm btn-primary" href="{% url 'admin:app_solution_change' solution.id %}">Edit in DB</a>
       {% endif %}

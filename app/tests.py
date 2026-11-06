@@ -124,6 +124,27 @@ class SolutionEditTests(TestCase):
         self.assertEqual(res.json()["score"], self.solution.score)
         self.assertEqual(self.solution.score, evaluate_solution(self.solution)[0])
 
+    # ---- Export -------------------------------------------------------------
+
+    def test_export_csv(self):
+        self.room1.placed_name = "412"
+        self.room1.save()
+
+        res = self.client.get(reverse("admin_export_solution", args=[self.solution.id]))
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(res["Content-Type"], "text/csv; charset=utf-8")
+        self.assertIn('filename="test-rooms.csv"', res["Content-Disposition"])
+
+        rows = res.content.decode("utf-8-sig").splitlines()
+        self.assertEqual(rows, [
+            "Name,Room,Group",
+            "Student 0,412,Room #01",
+            "Student 1,,Room #02",
+            "Student 2,412,Room #01",
+            "Student 3,,Room #02",
+            "Student 4,,",
+        ])
+
     # ---- Security -----------------------------------------------------------
 
     def test_endpoints_require_login(self):
@@ -134,6 +155,7 @@ class SolutionEditTests(TestCase):
             ("post", reverse("admin_swap_students"), {"solution": self.solution.id, "a": self.a.id, "b": self.b.id}),
             ("post", reverse("admin_rename_room"), {"id": self.room1.id, "new": "x"}),
             ("get", reverse("admin_reevaluate_solution"), {"solution": self.solution.id}),
+            ("get", reverse("admin_export_solution", args=[self.solution.id]), {}),
         ]
         for method, url, data in checks:
             res = getattr(anon, method)(url, data)

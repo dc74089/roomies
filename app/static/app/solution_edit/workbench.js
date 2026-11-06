@@ -68,7 +68,7 @@
             <input class="placed-input" data-nodrag data-rename="${r.id}" value="${UI.esc(r.placed_name || "")}" placeholder="Hotel room #">
             <div class="internal">${UI.esc(r.internal_name)}</div>
           </div>
-          <div class="beds" title="${r.people.length} of ${r.capacity} beds">${beds}</div>
+          <div class="beds" title="${r.people.length} of ${r.capacity} beds" data-count="${r.people.length}/${r.capacity}">${beds}</div>
         </div>
         <div class="room-body">${r.people.map(pid => UI.chip(pid, inv)).join("")}</div>
         <div class="room-f">
@@ -395,6 +395,14 @@
   const dismissToast = () => $$(".toast-msg").forEach(t => t.remove());
   $("#undo").addEventListener("click", () => { dismissToast(); Engine.undo(); });
   $("#redo").addEventListener("click", () => { dismissToast(); Engine.redo(); });
+  // The CSV comes from the server, so let in-flight edits (e.g. a room # typed
+  // just before clicking) land first.
+  $("#export").addEventListener("click", async e => {
+    e.preventDefault();
+    const href = e.currentTarget.href;
+    if (await Engine.whenSaved()) window.location.href = href;
+    else alert("Some changes didn't save, so the export would be out of date. Reload the page and try again.");
+  });
   window.addEventListener("keydown", e => { if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "z") dismissToast(); });
 
   Engine.onChange(render);

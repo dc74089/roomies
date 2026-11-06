@@ -351,6 +351,8 @@
     move, swap, rename, undo, redo,
     canUndo: () => undoStack.length > 0 && !failed,
     canRedo: () => redoStack.length > 0 && !failed,
+    // Resolves once every queued edit has reached the server; true if they all saved
+    whenSaved: () => queue.then(() => !failed),
     onChange: fn => listeners.push(fn),
     onStatus: fn => statusListeners.push(fn),
   };
